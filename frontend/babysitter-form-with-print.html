@@ -1184,7 +1184,7 @@
         // JSONデータをフォームに読み込む関数
         async function loadFormData() {
             try {
-                const response = await fetch('form-data.json');
+                const response = await fetch('../data/form-data.json');
                 if (!response.ok) {
                     console.log('form-data.jsonが見つかりません。空のフォームを表示します。');
                     return;

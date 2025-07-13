@@ -9,18 +9,45 @@
 - JSONファイルからのデータ読み込み
 - 印刷時の入力フィールド枠線非表示
 - ズーム機能（50%〜150%）
+- 請求書CSVデータから申請書フォーマットへの変換（Python）
+
+## ディレクトリ構造
+```
+babysitter-claim-city-suginami/
+├── frontend/              # フロントエンド（HTMLファイル）
+│   ├── babysitter-form.html
+│   └── babysitter-form-with-print.html
+├── backend/               # バックエンド（変換スクリプト）
+│   └── invoice_to_form_converter.py
+├── data/                  # データファイル
+│   ├── form-data.json
+│   ├── converted_form_data.json
+│   ├── invoice-data.csv
+│   └── invoice-data_converted.json
+├── assets/                # 静的ファイル
+│   ├── images/
+│   │   └── samples/
+│   └── templates/
+├── docs/                  # ドキュメント
+│   ├── template.pdf
+│   └── sample.pdf
+├── docker-compose.yml     # Docker設定
+├── Dockerfile
+├── nginx.conf
+└── README.md
+```
 
 ## 使い方
 
 ### 基本的な使い方
-1. `babysitter-form-with-print.html`をブラウザで開く
+1. `frontend/babysitter-form-with-print.html`をブラウザで開く
 2. 必要な情報を入力
 3. 印刷ボタンをクリックして印刷
 
 ### JSONデータの読み込み
 フォームの初期値を自動的に読み込むには：
 
-1. `form-data.json`ファイルを編集して、必要なデータを入力
+1. `data/form-data.json`ファイルを編集して、必要なデータを入力
 2. HTMLファイルを開くと、自動的にJSONファイルからデータが読み込まれます
 
 #### form-data.jsonの構造
@@ -51,17 +78,18 @@
 - `Ctrl/Cmd + D`: ページ分割
 
 ## ファイル構成
-- `babysitter-form-with-print.html` - メインのHTMLファイル
-- `form-data.json` - フォームの初期データ（オプション）
-- `template.pdf` - 元のPDFテンプレート
-- `sample.pdf` - 記入例
+- `frontend/babysitter-form-with-print.html` - メインのHTMLファイル
+- `data/form-data.json` - フォームの初期データ（オプション）
+- `docs/template.pdf` - 元のPDFテンプレート
+- `docs/sample.pdf` - 記入例
+- `backend/invoice_to_form_converter.py` - 請求書データ変換スクリプト
 
 ## 注意事項
-- `form-data.json`ファイルが存在しない場合は、空のフォームが表示されます
+- `data/form-data.json`ファイルが存在しない場合は、空のフォームが表示されます
 - ブラウザのセキュリティ設定により、ローカルファイルの読み込みが制限される場合があります。その場合は、簡易的なWebサーバーを使用してください：
   ```bash
   # Python 3の場合
   python -m http.server 8000
   
-  # その後、http://localhost:8000/babysitter-form-with-print.html にアクセス
+  # その後、http://localhost:8000/frontend/babysitter-form-with-print.html にアクセス
   ```
