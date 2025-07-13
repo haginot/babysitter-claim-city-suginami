@@ -1181,8 +1181,123 @@
             };
         }
 
+        // JSONデータをフォームに読み込む関数
+        async function loadFormData() {
+            try {
+                const response = await fetch('form-data.json');
+                if (!response.ok) {
+                    console.log('form-data.jsonが見つかりません。空のフォームを表示します。');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                // 年度を設定
+                const yearInput = document.querySelector('.year-field input');
+                if (yearInput && data.year) {
+                    yearInput.value = data.year;
+                }
+                
+                // 申請者名と児童名を設定
+                const applicantInput = document.querySelector('.info-row:nth-child(1) .info-input');
+                const childInput = document.querySelector('.info-row:nth-child(2) .info-input');
+                if (applicantInput && data.applicantName) {
+                    applicantInput.value = data.applicantName;
+                }
+                if (childInput && data.childName) {
+                    childInput.value = data.childName;
+                }
+                
+                // ページ1のデータを設定
+                if (data.page1) {
+                    // 月を設定
+                    const page1MonthInput = document.querySelector('#page1 .date-section input:nth-of-type(2)');
+                    if (page1MonthInput && data.month) {
+                        page1MonthInput.value = data.month;
+                    }
+                    
+                    // 行データを設定
+                    const page1Rows = document.querySelectorAll('#page1 .usage-table tbody tr:not([style*="background-color"])');
+                    data.page1.rows.forEach((rowData, index) => {
+                        if (page1Rows[index]) {
+                            const inputs = page1Rows[index].querySelectorAll('input');
+                            if (inputs[0] && rowData.date) inputs[0].value = rowData.date;
+                            if (inputs[1] && rowData.dayTime) inputs[1].value = rowData.dayTime;
+                            if (inputs[2] && rowData.dayDuration) inputs[2].value = rowData.dayDuration;
+                            if (inputs[3] && rowData.nightTime) inputs[3].value = rowData.nightTime;
+                            if (inputs[4] && rowData.nightDuration) inputs[4].value = rowData.nightDuration;
+                            if (inputs[5] && rowData.amount) inputs[5].value = rowData.amount;
+                        }
+                    });
+                    
+                    // 合計行を設定
+                    const totalRows = document.querySelectorAll('#page1 .usage-table tbody tr[style*="background-color"]');
+                    if (totalRows[0]) {
+                        const inputs = totalRows[0].querySelectorAll('input');
+                        if (inputs[0] && data.page1.dayTotalTime) inputs[0].value = data.page1.dayTotalTime;
+                        if (inputs[1] && data.page1.nightTotalTime) inputs[1].value = data.page1.nightTotalTime;
+                        if (inputs[2] && data.page1.totalAmount) inputs[2].value = data.page1.totalAmount;
+                    }
+                    
+                    // 計算セクションを設定
+                    const calcInputs = document.querySelectorAll('#page1 .calculation-section input');
+                    if (calcInputs[0] && data.page1.dayHours) calcInputs[0].value = data.page1.dayHours;
+                    if (calcInputs[1] && data.page1.nightHours) calcInputs[1].value = data.page1.nightHours;
+                    if (calcInputs[2] && data.page1.subsidyAmount) calcInputs[2].value = data.page1.subsidyAmount;
+                    
+                    // 支払いセクションを設定
+                    const paymentInputs = document.querySelectorAll('#page1 .payment-section input');
+                    if (paymentInputs[0] && data.page1.requestAmount) paymentInputs[0].value = data.page1.requestAmount;
+                    if (paymentInputs[1] && data.page1.usageHours) paymentInputs[1].value = data.page1.usageHours;
+                }
+                
+                // ページ2のデータを設定
+                if (data.page2) {
+                    // テーブル1
+                    const page2Tables = document.querySelectorAll('#page2 .usage-table');
+                    if (page2Tables[0] && data.page2.table1) {
+                        const rows = page2Tables[0].querySelectorAll('tbody tr:not([style*="background-color"])');
+                        data.page2.table1.rows.forEach((rowData, index) => {
+                            if (rows[index]) {
+                                const inputs = rows[index].querySelectorAll('input');
+                                if (inputs[0] && rowData.date) inputs[0].value = rowData.date;
+                                if (inputs[1] && rowData.dayTime) inputs[1].value = rowData.dayTime;
+                                if (inputs[2] && rowData.dayDuration) inputs[2].value = rowData.dayDuration;
+                                if (inputs[3] && rowData.nightTime) inputs[3].value = rowData.nightTime;
+                                if (inputs[4] && rowData.nightDuration) inputs[4].value = rowData.nightDuration;
+                                if (inputs[5] && rowData.amount) inputs[5].value = rowData.amount;
+                            }
+                        });
+                    }
+                    
+                    // テーブル2
+                    if (page2Tables[1] && data.page2.table2) {
+                        const rows = page2Tables[1].querySelectorAll('tbody tr:not([style*="background-color"])');
+                        data.page2.table2.rows.forEach((rowData, index) => {
+                            if (rows[index]) {
+                                const inputs = rows[index].querySelectorAll('input');
+                                if (inputs[0] && rowData.date) inputs[0].value = rowData.date;
+                                if (inputs[1] && rowData.dayTime) inputs[1].value = rowData.dayTime;
+                                if (inputs[2] && rowData.dayDuration) inputs[2].value = rowData.dayDuration;
+                                if (inputs[3] && rowData.nightTime) inputs[3].value = rowData.nightTime;
+                                if (inputs[4] && rowData.nightDuration) inputs[4].value = rowData.nightDuration;
+                                if (inputs[5] && rowData.amount) inputs[5].value = rowData.amount;
+                            }
+                        });
+                    }
+                }
+                
+                console.log('フォームデータが正常に読み込まれました。');
+            } catch (error) {
+                console.error('フォームデータの読み込みエラー:', error);
+            }
+        }
+
         // 初期化
         document.addEventListener('DOMContentLoaded', function() {
+            // JSONデータを読み込む
+            loadFormData();
+            
             // 初期ズームの適用
             changeZoom();
             
