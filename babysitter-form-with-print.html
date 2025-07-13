@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ベビーシッター（一時預かり）利用内訳書</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'MS Gothic', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+        }
+
+        /* ツールバー */
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .toolbar button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .toolbar button:hover {
+            background: #f0f0f0;
+        }
+
+        .toolbar button.active {
+            background: #007acc;
+            color: white;
+        }
+
+        .toolbar select {
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .toolbar-divider {
+            height: 20px;
+            width: 1px;
+            background: #ddd;
+        }
+
+        /* サイドパネル */
+        .sidebar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 300px;
+            height: calc(100vh - 60px);
+            background: white;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar h3 {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .sidebar .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .sidebar .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .sidebar .setting-group select,
+        .sidebar .setting-group input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .sidebar .margin-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* メインコンテンツエリア */
+        .main-content {
+            margin-top: 60px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+            gap: 40px;
+        }
+
+        .main-content.sidebar-open {
+            margin-left: 300px;
+        }
+
+        /* ページコンテナ */
+        .page-container {
+            background: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            transform-origin: top center;
+            transition: transform 0.2s ease;
+            display: block;
+        }
+
+        /* A4ページサイズ */
+        .page-container.a4-portrait {
+            width: 210mm;
+            min-height: 297mm;
+            max-height: 297mm;
+            padding: var(--page-margin-top, 20mm) var(--page-margin-right, 20mm) var(--page-margin-bottom, 20mm) var(--page-margin-left, 20mm);
+            overflow: hidden;
+            page-break-after: always;
+        }
+
+        .page-container.a4-landscape {
+            width: 297mm;
+            min-height: 210mm;
+            max-height: 210mm;
+            padding: var(--page-margin-top, 20mm) var(--page-margin-right, 20mm) var(--page-margin-bottom, 20mm) var(--page-margin-left, 20mm);
+            overflow: hidden;
+            page-break-after: always;
+        }
+
+        /* ページ分割のための追加スタイル */
+        .page-overflow {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        .page-content {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* テーブル分割用のスタイル */
+        .table-continuation {
+            margin-top: 0;
+        }
+
+        .table-continuation thead {
+            background-color: #f0f0f0;
+        }
+
+        /* ページ分割時の要素制御 */
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+
+        .break-before {
+            page-break-before: always;
+        }
+
+        /* ズーム */
+        .zoom-50 { transform: scale(0.5); }
+        .zoom-75 { transform: scale(0.75); }
+        .zoom-100 { transform: scale(1); }
+        .zoom-125 { transform: scale(1.25); }
+        .zoom-150 { transform: scale(1.5); }
+
+        /* ページ番号表示 */
+        .page-number-display {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        /* フォームスタイル（既存のスタイルを継承） */
+        .header {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .year-field {
+            display: inline-block;
+            margin-left: 20px;
+            font-size: 14px;
+        }
+        
+        .form-section {
+            margin-bottom: 15px;
+        }
+        
+        .applicant-info {
+            border: 2px solid black;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .applicant-info input {
+            border: none;
+            border-bottom: 1px solid black;
+            background: transparent;
+            width: 200px;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        
+        .child-info {
+            margin-left: 20px;
+        }
+        
+        .child-info input {
+            border: none;
+            border-bottom: 1px solid black;
+            background: transparent;
+            width: 200px;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        
+        .notes-box {
+            border: 1px solid black;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .notes-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .usage-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .usage-table th,
+        .usage-table td {
+            border: 1px solid black;
+            padding: 3px 5px;
+            text-align: center;
+            font-size: 11px;
+        }
+        
+        /* すべての入力フィールドの基本スタイル */
+        .usage-table input {
+            border: 1px solid #ccc;
+            background: white;
+            font-family: inherit;
+            font-size: 11px;
+            padding: 2px;
+        }
+        
+        .usage-table th {
+            background-color: #e6e6e6;
+            font-weight: bold;
+        }
+        
+        .date-section {
+            border: 2px solid black;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .date-section input {
+            border: none;
+            border-bottom: 1px solid black;
+            background: transparent;
+            width: 50px;
+            text-align: center;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        
+        .calculation-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        .calc-box {
+            border: 2px solid black;
+            padding: 5px 10px;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .calc-box input {
+            border: none;
+            background: transparent;
+            text-align: center;
+            width: 100%;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .subsidy-info {
+            font-size: 10px;
+            margin: 10px 0;
+        }
+        
+        .payment-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .payment-box {
+            border: 2px solid black;
+            padding: 8px;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .payment-box.highlight {
+            background-color: #ffff99;
+        }
+        
+        .payment-box input {
+            border: none;
+            background: transparent;
+            text-align: center;
+            width: 100%;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        
+        .page-number {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+        }
+        
+        .time-input {
+            width: 60px;
+            text-align: center;
+        }
+        
+        .hour-input {
+            width: 100%;
+            max-width: 40px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        
+        .minute-input {
+            width: 100%;
+            max-width: 40px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        
+        .amount-input {
+            width: 100%;
+            text-align: right;
+            box-sizing: border-box;
+        }
+        
+        /* 日中利用と夜間利用の列幅を均等に */
+        .usage-table {
+            table-layout: auto;
+        }
+        
+        /* 各列の幅を設定 */
+        .usage-table td:nth-child(1) { width: 8%; }  /* 利用日 */
+        .usage-table td:nth-child(2) { width: 10%; } /* ～ */
+        .usage-table td:nth-child(3) { width: 10%; } /* 時間 */
+        .usage-table td:nth-child(4) { width: 10%; } /* 分 */
+        .usage-table td:nth-child(5) { width: 10%; } /* ～ */
+        .usage-table td:nth-child(6) { width: 10%; } /* 時間 */
+        .usage-table td:nth-child(7) { width: 10%; } /* 分 */
+        .usage-table td:nth-child(8) { width: 12%; } /* 実支払額 */
+
+        /* 印刷スタイル */
+        @media print {
+            .toolbar,
+            .sidebar,
+            .page-number-display {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            .main-content {
+                margin: 0;
+                padding: 0;
+            }
+
+            .page-container {
+                box-shadow: none;
+                margin: 0;
+                transform: none !important;
+                page-break-after: always;
+            }
+
+            .page-container:last-child {
+                page-break-after: auto;
+            }
+            
+            /* 印刷時は入力フィールドの枠線を非表示 */
+            .usage-table input,
+            .info-input,
+            input[type="text"] {
+                border: none !important;
+                background: transparent !important;
+            }
+
+            /* 印刷時のページサイズを正確に設定 */
+            @page {
+                size: var(--print-page-size, A4) var(--print-orientation, portrait);
+                margin: 0;
+            }
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+            }
+
+            .main-content.sidebar-open {
+                margin-left: 0;
+            }
+
+            .page-container {
+                width: 100%;
+                min-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ツールバー -->
+    <div class="toolbar">
+        <button id="settingsBtn">⚙️ 設定</button>
+        <div class="toolbar-divider"></div>
+        
+        <label>ズーム:</label>
+        <select id="zoomSelect">
+            <option value="50">50%</option>
+            <option value="75">75%</option>
+            <option value="100" selected>100%</option>
+            <option value="125">125%</option>
+            <option value="150">150%</option>
+        </select>
+        
+        <div class="toolbar-divider"></div>
+        
+        <button id="printBtn">🖨️ 印刷</button>
+        <button id="previewBtn">👁️ 印刷プレビュー</button>
+        <button id="paginateBtn">📄 ページ分割</button>
+        
+        <div class="toolbar-divider"></div>
+        
+        <span id="pageInfo">ページ 1-2</span>
+    </div>
+
+    <!-- サイドバー設定パネル -->
+    <div class="sidebar" id="sidebar">
+        <h3>ページ設定</h3>
+        
+        <div class="setting-group">
+            <label>用紙サイズ:</label>
+            <select id="paperSize">
+                <option value="a4">A4</option>
+                <option value="letter">Letter</option>
+                <option value="legal">Legal</option>
+            </select>
+        </div>
+        
+        <div class="setting-group">
+            <label>印刷方向:</label>
+            <select id="orientation">
+                <option value="portrait">縦</option>
+                <option value="landscape">横</option>
+            </select>
+        </div>
+        
+        <div class="setting-group">
+            <label>マージン (mm):</label>
+            <div class="margin-inputs">
+                <input type="number" id="marginTop" placeholder="上" value="20">
+                <input type="number" id="marginRight" placeholder="右" value="20">
+                <input type="number" id="marginBottom" placeholder="下" value="20">
+                <input type="number" id="marginLeft" placeholder="左" value="20">
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <label>ヘッダー:</label>
+            <input type="text" id="headerText" placeholder="ヘッダーテキスト">
+        </div>
+        
+        <div class="setting-group">
+            <label>フッター:</label>
+            <input type="text" id="footerText" placeholder="フッターテキスト">
+        </div>
+        
+        <button onclick="applySettings()" style="width: 100%; margin-top: 20px;">設定を適用</button>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="main-content" id="mainContent">
+        <!-- ページ1 -->
+        <div class="page-container a4-portrait" id="page1">
+            <div class="page-number-display">ページ 1</div>
+            
+            <div class="header">
+                ベビーシッター（一時預かり）利用内訳書
+                <span class="year-field">【令和 <input type="text" style="width: 30px;"> 年度】</span>
+            </div>
+            
+            <style>
+                .info-section {
+                    margin-bottom: 20px;
+                }
+                .info-row {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 10px;
+                    gap: 30px;
+                }
+                .info-label {
+                    font-weight: bold;
+                    min-width: 80px;
+                    white-space: nowrap;
+                }
+                .info-input {
+                    border: none;
+                    border-bottom: 2px solid black;
+                    background: transparent;
+                    flex: 1;
+                    font-size: 14px;
+                    font-family: inherit;
+                    padding: 5px 0;
+                }
+            </style>
+            
+            <div class="info-section">
+                <div class="info-row">
+                    <div class="info-label">申請者名</div>
+                    <input type="text" class="info-input">
+                </div>
+                <div class="info-row">
+                    <div class="info-label">児童名</div>
+                    <input type="text" class="info-input">
+                </div>
+            </div>
+            
+            <div class="notes-box">
+                <ul>
+                    <li>7時～22時の利用と22時～翌7時の利用は記載欄を分けて記入してください。</li>
+                    <li>支払いに杉並区子育て応援券を使用した利用分については補助対象外です。</li>
+                    <li>入会金、会費、登録料、交通費、キャンセル料、保険料、おむつ代等の実費等は補助対象外です。</li>
+                </ul>
+            </div>
+            
+            <div class="date-section">
+                令和 <input type="text"> 年 <input type="text"> 月分　　事業者への支払金額から、交通費やクーポン等の割引を差し引いた、純然たる保育料を記載。
+            </div>
+            
+            <table class="usage-table">
+                <thead>
+                    <tr>
+                        <th rowspan="3">利用日</th>
+                        <th colspan="6">利用時間</th>
+                        <th rowspan="3">実支払額</th>
+                    </tr>
+                    <tr>
+                        <th colspan="3">日中利用（7時～22時）</th>
+                        <th colspan="3">夜間利用（22時～翌7時）</th>
+                    </tr>
+                    <tr>
+                        <th>～</th>
+                        <th>時間</th>
+                        <th>分</th>
+                        <th>～</th>
+                        <th>時間</th>
+                        <th>分</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 10行のデータ入力行 -->
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <!-- 合計行 -->
+                    <tr style="background-color: #e6e6e6;">
+                        <td>日中利用時間合計</td>
+                        <td></td>
+                        <td><input type="text" class="hour-input"></td>
+                        <td><input type="text" class="minute-input"></td>
+                        <td>夜間利用時間合計</td>
+                        <td><input type="text" class="hour-input"></td>
+                        <td><input type="text" class="minute-input"></td>
+                        <td>￥ <input type="text" class="amount-input" style="width: 80%;"></td>
+                    </tr>
+                    <tr style="background-color: #e6e6e6;">
+                        <td>他ページ含む総計</td>
+                        <td></td>
+                        <td><input type="text" class="hour-input"></td>
+                        <td><input type="text" class="minute-input"></td>
+                        <td>他ページ含む総計</td>
+                        <td><input type="text" class="hour-input"></td>
+                        <td><input type="text" class="minute-input"></td>
+                        <td>￥ <input type="text" class="amount-input" style="width: 80%;"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="calculation-section">
+                <div>
+                    <div style="font-size: 10px;">日中利用時間</div>
+                    <div style="font-size: 10px;">(60分未満切捨)</div>
+                    <div class="calc-box">
+                        <input type="text"> 時間
+                    </div>
+                </div>
+                <div>×</div>
+                <div>2,500円</div>
+                <div>+</div>
+                <div>
+                    <div style="font-size: 10px;">夜間利用時間</div>
+                    <div style="font-size: 10px;">(60分未満切捨)</div>
+                    <div class="calc-box">
+                        <input type="text"> 時間
+                    </div>
+                </div>
+                <div>×</div>
+                <div>3,500円</div>
+                <div>=</div>
+                <div class="calc-box" style="background-color: #cce6ff;">
+                    <div style="font-size: 10px;">補助基準額</div>
+                    ￥ <input type="text">
+                </div>
+            </div>
+            
+            <div class="subsidy-info">
+                ※補助時間数の上限は児童1人あたり1ヶ月年度内で<strong>144時間</strong><br>
+                （多胎児の場合は1人あたり<strong>288時間</strong>）です。
+            </div>
+            
+            <div class="payment-section">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="background-color: red; color: white; padding: 2px 5px; font-size: 10px;">A</span>
+                    <span>と</span>
+                    <span style="background-color: blue; color: white; padding: 2px 5px; font-size: 10px;">B</span>
+                    <span>の</span>
+                    <br>
+                    <span style="font-size: 10px;">小さい方の金額</span>
+                </div>
+                <div class="payment-box highlight">
+                    <div style="font-size: 10px;">交付請求額</div>
+                    ￥ <input type="text">
+                </div>
+                <div class="payment-box">
+                    <div style="font-size: 10px;">使用時間数</div>
+                    <input type="text"> 時間
+                </div>
+            </div>
+            
+            <div class="page-number">1 ページ</div>
+        </div>
+
+        <!-- ページ2 -->
+        <div class="page-container a4-portrait" id="page2">
+            <div class="page-number-display">ページ 2</div>
+            
+            <div class="date-section">
+                令和 <input type="text"> 年 <input type="text"> 月分
+            </div>
+            
+            <table class="usage-table">
+                <thead>
+                    <tr>
+                        <th rowspan="3">利用日</th>
+                        <th colspan="6">利用時間</th>
+                        <th rowspan="3">実支払額</th>
+                    </tr>
+                    <tr>
+                        <th colspan="3">日中利用（7時～22時）</th>
+                        <th colspan="3">夜間利用（22時～翌7時）</th>
+                    </tr>
+                    <tr>
+                        <th>～</th>
+                        <th>時間</th>
+                        <th>分</th>
+                        <th>～</th>
+                        <th>時間</th>
+                        <th>分</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 12行のデータ入力行 -->
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <!-- 合計行 -->
+                    <tr style="background-color: #e6e6e6;">
+                        <td>日中利用時間合計</td>
+                        <td></td>
+                        <td><input type="text" class="hour-input"></td>
+                        <td><input type="text" class="minute-input"></td>
+                        <td>夜間利用時間合計</td>
+                        <td><input type="text" class="hour-input"></td>
+                        <td><input type="text" class="minute-input"></td>
+                        <td>￥ <input type="text" class="amount-input" style="width: 80%;"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="date-section">
+                令和 <input type="text"> 年 <input type="text"> 月分
+            </div>
+            
+            <table class="usage-table">
+                <thead>
+                    <tr>
+                        <th rowspan="3">利用日</th>
+                        <th colspan="6">利用時間</th>
+                        <th rowspan="3">実支払額</th>
+                    </tr>
+                    <tr>
+                        <th colspan="3">日中利用（7時～22時）</th>
+                        <th colspan="3">夜間利用（22時～翌7時）</th>
+                    </tr>
+                    <tr>
+                        <th>～</th>
+                        <th>時間</th>
+                        <th>分</th>
+                        <th>～</th>
+                        <th>時間</th>
+                        <th>分</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 7行のデータ入力行 -->
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <tr><td><input type="text" style="width: 100%;"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td>～</td><td><input type="text" class="hour-input"></td><td><input type="text" class="minute-input"></td><td><input type="text" class="amount-input"></td></tr>
+                    <!-- 合計行 -->
+                    <tr style="background-color: #e6e6e6;">
+                        <td>日中利用時間合計</td>
+                        <td></td>
+                        <td><input type="text" class="hour-input"></td>
+                        <td><input type="text" class="minute-input"></td>
+                        <td>夜間利用時間合計</td>
+                        <td><input type="text" class="hour-input"></td>
+                        <td><input type="text" class="minute-input"></td>
+                        <td>￥ <input type="text" class="amount-input" style="width: 80%;"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="text-align: center; background-color: #ffff00; padding: 10px; margin: 20px 0; font-weight: bold;">
+                記載する行が不足する場合は、続きを2ページ目と同様に記載してください。
+            </div>
+            
+            <div class="page-number">2 ページ</div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let currentZoom = 100;
+        let sidebarOpen = false;
+
+        // DOM要素の取得
+        const settingsBtn = document.getElementById('settingsBtn');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const zoomSelect = document.getElementById('zoomSelect');
+        const printBtn = document.getElementById('printBtn');
+        const previewBtn = document.getElementById('previewBtn');
+        const paginateBtn = document.getElementById('paginateBtn');
+        const pageInfo = document.getElementById('pageInfo');
+
+        // イベントリスナーの設定
+        settingsBtn.addEventListener('click', toggleSidebar);
+        zoomSelect.addEventListener('change', changeZoom);
+        printBtn.addEventListener('click', printDocument);
+        previewBtn.addEventListener('click', showPrintPreview);
+        paginateBtn.addEventListener('click', paginateContent);
+
+        // サイドバーの開閉
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            sidebar.classList.toggle('open', sidebarOpen);
+            mainContent.classList.toggle('sidebar-open', sidebarOpen);
+            settingsBtn.classList.toggle('active', sidebarOpen);
+        }
+
+        // ズーム機能
+        function changeZoom() {
+            currentZoom = parseInt(zoomSelect.value);
+            const pages = document.querySelectorAll('.page-container');
+            pages.forEach(page => {
+                page.className = page.className.replace(/zoom-\d+/, `zoom-${currentZoom}`);
+            });
+        }
+
+        // 設定の適用
+        function applySettings() {
+            const paperSize = document.getElementById('paperSize').value;
+            const orientation = document.getElementById('orientation').value;
+            const marginTop = document.getElementById('marginTop').value;
+            const marginRight = document.getElementById('marginRight').value;
+            const marginBottom = document.getElementById('marginBottom').value;
+            const marginLeft = document.getElementById('marginLeft').value;
+            const headerText = document.getElementById('headerText').value;
+            const footerText = document.getElementById('footerText').value;
+
+            // ページサイズとマージンの適用
+            const pages = document.querySelectorAll('.page-container');
+            pages.forEach(page => {
+                // ページサイズクラスの更新
+                page.className = page.className.replace(/a4-(portrait|landscape)/, `${paperSize}-${orientation}`);
+                
+                // マージンの適用
+                page.style.setProperty('--page-margin-top', `${marginTop}mm`);
+                page.style.setProperty('--page-margin-right', `${marginRight}mm`);
+                page.style.setProperty('--page-margin-bottom', `${marginBottom}mm`);
+                page.style.setProperty('--page-margin-left', `${marginLeft}mm`);
+            });
+
+            // 印刷設定の適用
+            document.documentElement.style.setProperty('--print-page-size', paperSize.toUpperCase());
+            document.documentElement.style.setProperty('--print-orientation', orientation);
+
+            // ヘッダー・フッターの追加（簡易実装）
+            if (headerText || footerText) {
+                addHeaderFooter(headerText, footerText);
+            }
+
+            alert('設定が適用されました');
+        }
+
+        // ヘッダー・フッターの追加
+        function addHeaderFooter(header, footer) {
+            const pages = document.querySelectorAll('.page-container');
+            pages.forEach(page => {
+                // 既存のヘッダー・フッターを削除
+                const existingHeader = page.querySelector('.custom-header');
+                const existingFooter = page.querySelector('.custom-footer');
+                if (existingHeader) existingHeader.remove();
+                if (existingFooter) existingFooter.remove();
+
+                // ヘッダーの追加
+                if (header) {
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'custom-header';
+                    headerDiv.style.cssText = 'position: absolute; top: 10mm; left: 0; right: 0; text-align: center; font-size: 10px; color: #666;';
+                    headerDiv.textContent = header;
+                    page.style.position = 'relative';
+                    page.appendChild(headerDiv);
+                }
+
+                // フッターの追加
+                if (footer) {
+                    const footerDiv = document.createElement('div');
+                    footerDiv.className = 'custom-footer';
+                    footerDiv.style.cssText = 'position: absolute; bottom: 10mm; left: 0; right: 0; text-align: center; font-size: 10px; color: #666;';
+                    footerDiv.textContent = footer;
+                    page.style.position = 'relative';
+                    page.appendChild(footerDiv);
+                }
+            });
+        }
+
+        // 印刷機能
+        function printDocument() {
+            window.print();
+        }
+
+        // 印刷プレビュー
+        function showPrintPreview() {
+            // 既にプレビューモードかどうかをチェック
+            if (document.body.classList.contains('print-preview')) {
+                exitPrintPreview();
+                return;
+            }
+
+            // プレビューモードのスタイルを追加
+            const previewStyle = document.createElement('style');
+            previewStyle.id = 'print-preview-style';
+            previewStyle.textContent = `
+                .print-preview .toolbar {
+                    background: #333;
+                    color: white;
+                }
+                .print-preview .sidebar {
+                    display: none;
+                }
+                .print-preview .main-content {
+                    margin-left: 0;
+                    background: #666;
+                    padding: 40px;
+                }
+                .print-preview .page-container {
+                    margin-bottom: 40px;
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+                }
+                .print-preview .page-number-display {
+                    background: rgba(0,0,0,0.8);
+                }
+            `;
+            document.head.appendChild(previewStyle);
+
+            // プレビューモードのクラスを追加
+            document.body.classList.add('print-preview');
+
+            // ボタンテキストを変更
+            previewBtn.textContent = '📄 編集モード';
+            
+            // サイドバーを閉じる
+            if (sidebarOpen) {
+                toggleSidebar();
+            }
+        }
+
+        // 印刷プレビュー終了
+        function exitPrintPreview() {
+            document.body.classList.remove('print-preview');
+            const previewStyle = document.getElementById('print-preview-style');
+            if (previewStyle) {
+                previewStyle.remove();
+            }
+            previewBtn.textContent = '👁️ 印刷プレビュー';
+        }
+
+        // ページ分割機能
+        function paginateContent() {
+            const pages = document.querySelectorAll('.page-container');
+            let totalPages = 0;
+            
+            pages.forEach((page, index) => {
+                const result = splitPageIfNeeded(page, index + 1);
+                totalPages += result.pageCount;
+            });
+            
+            updatePageInfo(totalPages);
+            alert(`ページ分割完了: ${totalPages}ページに分割されました`);
+        }
+
+        // ページ分割が必要かチェックし、必要であれば分割
+        function splitPageIfNeeded(pageContainer, originalPageNumber) {
+            const pageHeight = 297; // A4縦のmm
+            const marginTop = parseFloat(getComputedStyle(pageContainer).getPropertyValue('--page-margin-top')) || 20;
+            const marginBottom = parseFloat(getComputedStyle(pageContainer).getPropertyValue('--page-margin-bottom')) || 20;
+            const availableHeight = pageHeight - marginTop - marginBottom;
+            
+            // 一時的に高さ制限を解除して実際のコンテンツ高さを測定
+            pageContainer.style.maxHeight = 'none';
+            pageContainer.style.overflow = 'visible';
+            
+            const contentHeight = pageContainer.scrollHeight;
+            const maxContentHeight = availableHeight * 0.95; // 少し余裕を持たせる
+            
+            if (contentHeight <= maxContentHeight) {
+                // 分割不要
+                pageContainer.style.maxHeight = '297mm';
+                pageContainer.style.overflow = 'hidden';
+                return { pageCount: 1 };
+            }
+
+            // 分割が必要
+            return splitPageContent(pageContainer, originalPageNumber, maxContentHeight);
+        }
+
+        // ページコンテンツを実際に分割
+        function splitPageContent(pageContainer, originalPageNumber, maxHeight) {
+            const tables = pageContainer.querySelectorAll('.usage-table');
+            let pageCount = 1;
+            
+            tables.forEach(table => {
+                const result = splitTableIfNeeded(table, pageContainer, maxHeight);
+                if (result.split) {
+                    pageCount += result.additionalPages;
+                }
+            });
+            
+            return { pageCount };
+        }
+
+        // テーブルの分割処理
+        function splitTableIfNeeded(table, pageContainer, maxHeight) {
+            const rows = table.querySelectorAll('tbody tr');
+            const rowHeight = 30; // 概算の行高さ（px）
+            const headerHeight = 60; // ヘッダーの高さ
+            
+            const maxRowsPerPage = Math.floor((maxHeight - headerHeight) / rowHeight);
+            
+            if (rows.length <= maxRowsPerPage) {
+                return { split: false, additionalPages: 0 };
+            }
+
+            // テーブルを分割
+            const originalTable = table.cloneNode(true);
+            const thead = table.querySelector('thead').cloneNode(true);
+            
+            // 元のテーブルを最初のページ用に調整
+            const firstPageRows = Array.from(rows).slice(0, maxRowsPerPage);
+            const tbody = table.querySelector('tbody');
+            tbody.innerHTML = '';
+            firstPageRows.forEach(row => tbody.appendChild(row));
+
+            // 残りの行で新しいページを作成
+            const remainingRows = Array.from(rows).slice(maxRowsPerPage);
+            let additionalPages = 0;
+            
+            while (remainingRows.length > 0) {
+                additionalPages++;
+                const newPage = createContinuationPage(pageContainer, additionalPages);
+                const newTable = createContinuationTable(thead, remainingRows.slice(0, maxRowsPerPage));
+                
+                newPage.appendChild(newTable);
+                pageContainer.parentNode.insertBefore(newPage, pageContainer.nextSibling);
+                
+                remainingRows.splice(0, maxRowsPerPage);
+            }
+
+            return { split: true, additionalPages };
+        }
+
+        // 継続ページの作成
+        function createContinuationPage(originalPage, pageNumber) {
+            const newPage = document.createElement('div');
+            newPage.className = originalPage.className;
+            newPage.innerHTML = `
+                <div class="page-number-display">ページ ${pageNumber + 1}</div>
+                <div class="page-number">${pageNumber + 1} ページ</div>
+            `;
+            return newPage;
+        }
+
+        // 継続テーブルの作成
+        function createContinuationTable(thead, rows) {
+            const table = document.createElement('table');
+            table.className = 'usage-table table-continuation';
+            
+            table.appendChild(thead);
+            
+            const tbody = document.createElement('tbody');
+            rows.forEach(row => tbody.appendChild(row.cloneNode(true)));
+            table.appendChild(tbody);
+            
+            return table;
+        }
+
+        // ページ情報の更新
+        function updatePageInfo(totalPages) {
+            pageInfo.textContent = `ページ 1-${totalPages}`;
+        }
+
+        // 自動ページ分割（コンテンツ変更時）
+        function autoCheckPagination() {
+            // フォーム入力時に自動でページ分割をチェック
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', debounce(() => {
+                    checkIfPaginationNeeded();
+                }, 500));
+            });
+        }
+
+        // ページ分割が必要かチェック
+        function checkIfPaginationNeeded() {
+            const pages = document.querySelectorAll('.page-container');
+            let needsPagination = false;
+            
+            pages.forEach(page => {
+                const contentHeight = page.scrollHeight;
+                const maxHeight = 297 * 3.779527559; // mmをpxに変換
+                
+                if (contentHeight > maxHeight) {
+                    needsPagination = true;
+                    page.classList.add('page-overflow');
+                } else {
+                    page.classList.remove('page-overflow');
+                }
+            });
+            
+            if (needsPagination) {
+                paginateBtn.style.backgroundColor = '#ff6b6b';
+                paginateBtn.style.color = 'white';
+            } else {
+                paginateBtn.style.backgroundColor = '';
+                paginateBtn.style.color = '';
+            }
+        }
+
+        // デバウンス関数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初期ズームの適用
+            changeZoom();
+            
+            // 自動ページ分割チェックの初期化
+            autoCheckPagination();
+            
+            // 初期ページ分割チェック
+            setTimeout(checkIfPaginationNeeded, 100);
+            
+            // キーボードショートカット
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'p':
+                            e.preventDefault();
+                            printDocument();
+                            break;
+                        case ',':
+                            e.preventDefault();
+                            toggleSidebar();
+                            break;
+                        case 'd':
+                            e.preventDefault();
+                            paginateContent();
+                            break;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
