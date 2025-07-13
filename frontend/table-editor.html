@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>請求書データ編集</title>
+    <style>
+        body {
+            font-family: 'MS Gothic', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .editable-cell {
+            cursor: pointer;
+            min-width: 80px;
+        }
+        
+        .editable-cell:hover {
+            background-color: #fff3cd;
+        }
+        
+        .editable-cell input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-family: inherit;
+            padding: 4px;
+        }
+        
+        .editable-cell input:focus {
+            outline: 2px solid #007bff;
+            background-color: white;
+        }
+        
+        .editable-cell.error input {
+            border: 2px solid #dc3545;
+            background-color: #f8d7da;
+        }
+        
+        .editable-cell.warning input {
+            border: 2px solid #ffc107;
+            background-color: #fff3cd;
+        }
+        
+        .editable-cell.success input {
+            border: 2px solid #28a745;
+            background-color: #d4edda;
+        }
+        
+        .validation-message {
+            font-size: 12px;
+            margin-top: 2px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            display: none;
+        }
+        
+        .validation-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .validation-message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            display: block;
+        }
+        
+        .validation-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .row-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .row-actions button {
+            padding: 4px 8px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .status-bar {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #d1ecf1;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .nav-links {
+            margin-bottom: 20px;
+        }
+        
+        .nav-links a {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .nav-links a.active {
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-links">
+        <a href="babysitter-form.html">申請書フォーム</a>
+        <a href="table-editor.html" class="active">テーブル編集</a>
+    </div>
+    
+    <div class="header">
+        請求書データ編集
+    </div>
+    
+    <div class="controls">
+        <button class="btn btn-primary" onclick="loadData()">データ読み込み</button>
+        <button class="btn btn-success" onclick="saveData()">データ保存</button>
+        <button class="btn btn-primary" onclick="addRow()">行追加</button>
+        <button class="btn btn-secondary" onclick="previewFormData()">プレビュー</button>
+        <button class="btn btn-secondary" onclick="exportToForm()">申請書フォームへ</button>
+    </div>
+    
+    <div class="table-container">
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>ご利用日</th>
+                    <th>開始時刻</th>
+                    <th>終了時刻</th>
+                    <th>シッター名</th>
+                    <th>お子さま</th>
+                    <th>保育料 (非課税)</th>
+                    <th>保育料 (税込10%)</th>
+                    <th>オプション料 (税込10%)</th>
+                    <th>交通費 (税込11%)</th>
+                    <th>特別費用 (税込10%)</th>
+                    <th>キャンセル料 (不課税)</th>
+                    <th>割引額</th>
+                    <th>お支払い額</th>
+                    <th>(一時預かりのみ) 助成対象金額</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="dataTableBody">
+                <tr>
+                    <td colspan="15" class="loading">データを読み込み中...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div id="statusBar" class="status-bar">
+        システム準備完了
+    </div>
+    
+    <script>
+        let currentData = [];
+        let isLoading = false;
+        
+        // ページ読み込み時にデータを取得
+        window.onload = function() {
+            loadData();
+        };
+        
+        // データ読み込み関数
+        async function loadData() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            updateStatus('データを読み込み中...', 'loading');
+            
+            try {
+                const response = await fetch('/api/csv/read');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                currentData = data.rows || [];
+                renderTable();
+                updateStatus(`データを読み込みました (${currentData.length}件)`, 'success');
+            } catch (error) {
+                console.error('データ読み込みエラー:', error);
+                updateStatus('データ読み込みエラー: ' + error.message, 'error');
+                // エラー時にはダミーデータを表示
+                loadSampleData();
+            } finally {
+                isLoading = false;
+            }
+        }
+        
+        // サンプルデータ読み込み（開発用）
+        function loadSampleData() {
+            currentData = [
+                {
+                    '利用日': '2025/05/18',
+                    '開始時刻': '14:30',
+                    '終了時刻': '18:00',
+                    'シッター名': '渡辺 江里子',
+                    'お子さま': '杉並 すけ様(2歳1ヶ月)',
+                    '保育料_非課税': '9100',
+                    '保育料_税込10': '0',
+                    'オプション料_税込10': '',
+                    '交通費_税込11': '810',
+                    '特別費用_税込10': '0',
+                    'キャンセル料_不課税': '0',
+                    '割引額': '0',
+                    'お支払い額': '9910',
+                    '助成対象金額': '9100'
+                },
+                {
+                    '利用日': '2025/05/25',
+                    '開始時刻': '10:00',
+                    '終了時刻': '17:00',
+                    'シッター名': '木村 美穂',
+                    'お子さま': '杉並 すけ様(2歳1ヶ月)',
+                    '保育料_非課税': '18200',
+                    '保育料_税込10': '0',
+                    'オプション料_税込10': '0',
+                    '交通費_税込11': '816',
+                    '特別費用_税込10': '0',
+                    'キャンセル料_不課税': '0',
+                    '割引額': '0',
+                    'お支払い額': '19016',
+                    '助成対象金額': '18200'
+                }
+            ];
+            renderTable();
+            updateStatus('サンプルデータを読み込みました', 'success');
+        }
+        
+        // テーブル描画関数
+        function renderTable() {
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = '';
+            
+            const fields = [
+                '利用日', '開始時刻', '終了時刻', 'シッター名', 'お子さま',
+                '保育料_非課税', '保育料_税込10', 'オプション料_税込10', '交通費_税込11',
+                '特別費用_税込10', 'キャンセル料_不課税', '割引額', 'お支払い額', '助成対象金額'
+            ];
+            
+            currentData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                
+                fields.forEach(field => {
+                    const td = document.createElement('td');
+                    td.className = 'editable-cell';
+                    td.innerHTML = `
+                        <input type="text" value="${row[field] || ''}" 
+                               onchange="updateCell(${index}, '${field}', this.value)"
+                               oninput="validateCellRealtime(${index}, '${field}', this.value, this)">
+                        <div class="validation-message" id="validation-${index}-${field}"></div>
+                    `;
+                    tr.appendChild(td);
+                });
+                
+                // 操作列
+                const actionTd = document.createElement('td');
+                actionTd.innerHTML = `
+                    <div class="row-actions">
+                        <button class="btn-danger" onclick="deleteRow(${index})">削除</button>
+                    </div>
+                `;
+                tr.appendChild(actionTd);
+                
+                tbody.appendChild(tr);
+            });
+            
+            // 描画後に既存データのバリデーションを実行
+            setTimeout(() => {
+                validateAllCells();
+            }, 100);
+        }
+        
+        // 全セルのバリデーション実行
+        function validateAllCells() {
+            const fields = [
+                '利用日', '開始時刻', '終了時刻', 'シッター名', 'お子さま',
+                '保育料_非課税', '保育料_税込10', 'オプション料_税込10', '交通費_税込11',
+                '特別費用_税込10', 'キャンセル料_不課税', '割引額', 'お支払い額', '助成対象金額'
+            ];
+            
+            currentData.forEach((row, rowIndex) => {
+                fields.forEach(field => {
+                    const value = row[field] || '';
+                    const inputElement = document.querySelector(`#validation-${rowIndex}-${field}`);
+                    if (inputElement) {
+                        const actualInput = inputElement.previousElementSibling;
+                        if (actualInput && actualInput.tagName === 'INPUT') {
+                            validateCellRealtime(rowIndex, field, value, actualInput);
+                        }
+                    }
+                });
+            });
+            
+            // バリデーション統計を更新
+            setTimeout(() => {
+                updateValidationStats();
+            }, 200);
+        }
+        
+        // セル更新関数
+        function updateCell(rowIndex, field, value) {
+            if (currentData[rowIndex]) {
+                currentData[rowIndex][field] = value;
+                updateStatus('データが変更されました', 'success');
+            }
+        }
+        
+        // リアルタイムバリデーション関数
+        function validateCellRealtime(rowIndex, field, value, inputElement) {
+            const validationResult = validateField(field, value, rowIndex);
+            const messageElement = document.getElementById(`validation-${rowIndex}-${field}`);
+            const cellElement = inputElement.closest('.editable-cell');
+            
+            // 既存のバリデーションクラスを削除
+            cellElement.classList.remove('error', 'warning', 'success');
+            
+            // バリデーション結果に基づいてスタイルを適用
+            if (validationResult.type === 'error') {
+                cellElement.classList.add('error');
+                messageElement.className = 'validation-message error';
+                messageElement.textContent = validationResult.message;
+            } else if (validationResult.type === 'warning') {
+                cellElement.classList.add('warning');
+                messageElement.className = 'validation-message warning';
+                messageElement.textContent = validationResult.message;
+            } else if (validationResult.type === 'success' && value.trim() !== '') {
+                cellElement.classList.add('success');
+                messageElement.className = 'validation-message success';
+                messageElement.textContent = validationResult.message;
+            } else {
+                messageElement.className = 'validation-message';
+                messageElement.textContent = '';
+            }
+            
+            // 時刻フィールドの場合、関連する時刻フィールドも再検証
+            if (field === '開始時刻' || field === '終了時刻') {
+                setTimeout(() => {
+                    validateTimeConsistency(rowIndex);
+                    updateValidationStats();
+                }, 100);
+            } else {
+                // バリデーション統計を更新
+                setTimeout(() => {
+                    updateValidationStats();
+                }, 50);
+            }
+        }
+        
+        // フィールド別バリデーション関数
+        function validateField(field, value, rowIndex) {
+            const trimmedValue = value.trim();
+            
+            // 空値のチェック
+            if (trimmedValue === '') {
+                const requiredFields = ['利用日', '開始時刻', '終了時刻', 'お子さま', 'お支払い額'];
+                if (requiredFields.includes(field)) {
+                    return { type: 'error', message: '必須項目です' };
+                }
+                return { type: 'valid', message: '' };
+            }
+            
+            // フィールド別のバリデーション
+            switch (field) {
+                case '利用日':
+                    return validateDate(trimmedValue);
+                    
+                case '開始時刻':
+                case '終了時刻':
+                    return validateTime(trimmedValue);
+                    
+                case '保育料_非課税':
+                case '保育料_税込10':
+                case 'オプション料_税込10':
+                case '交通費_税込11':
+                case '特別費用_税込10':
+                case 'キャンセル料_不課税':
+                case '割引額':
+                case 'お支払い額':
+                case '助成対象金額':
+                    return validateAmount(trimmedValue);
+                    
+                case 'シッター名':
+                    return validateName(trimmedValue);
+                    
+                case 'お子さま':
+                    return validateChildName(trimmedValue);
+                    
+                default:
+                    return { type: 'valid', message: '' };
+            }
+        }
+        
+        // 日付バリデーション
+        function validateDate(value) {
+            const datePattern = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/;
+            const match = value.match(datePattern);
+            
+            if (!match) {
+                return { type: 'error', message: 'YYYY/MM/DD形式で入力してください' };
+            }
+            
+            const year = parseInt(match[1]);
+            const month = parseInt(match[2]);
+            const day = parseInt(match[3]);
+            
+            // 基本的な日付チェック
+            if (year < 2020 || year > 2030) {
+                return { type: 'warning', message: '年が範囲外です' };
+            }
+            
+            if (month < 1 || month > 12) {
+                return { type: 'error', message: '月が正しくありません' };
+            }
+            
+            if (day < 1 || day > 31) {
+                return { type: 'error', message: '日が正しくありません' };
+            }
+            
+            // 月ごとの日数チェック
+            const daysInMonth = new Date(year, month, 0).getDate();
+            if (day > daysInMonth) {
+                return { type: 'error', message: `${month}月は${daysInMonth}日までです` };
+            }
+            
+            return { type: 'success', message: '正しい日付形式です' };
+        }
+        
+        // 時刻バリデーション
+        function validateTime(value) {
+            const timePattern = /^(\d{1,2}):(\d{2})$/;
+            const match = value.match(timePattern);
+            
+            if (!match) {
+                return { type: 'error', message: 'HH:MM形式で入力してください' };
+            }
+            
+            const hour = parseInt(match[1]);
+            const minute = parseInt(match[2]);
+            
+            if (hour < 0 || hour > 23) {
+                return { type: 'error', message: '時間は0-23の範囲で入力してください' };
+            }
+            
+            if (minute < 0 || minute > 59) {
+                return { type: 'error', message: '分は0-59の範囲で入力してください' };
+            }
+            
+            return { type: 'success', message: '正しい時刻形式です' };
+        }
+        
+        // 金額バリデーション
+        function validateAmount(value) {
+            const amountPattern = /^\d+$/;
+            
+            if (!amountPattern.test(value)) {
+                return { type: 'error', message: '数値で入力してください' };
+            }
+            
+            const amount = parseInt(value);
+            
+            if (amount < 0) {
+                return { type: 'error', message: '負の値は入力できません' };
+            }
+            
+            if (amount > 999999) {
+                return { type: 'warning', message: '金額が大きすぎます' };
+            }
+            
+            return { type: 'success', message: '正しい金額形式です' };
+        }
+        
+        // 名前バリデーション
+        function validateName(value) {
+            if (value.length < 2) {
+                return { type: 'warning', message: '名前が短すぎます' };
+            }
+            
+            if (value.length > 20) {
+                return { type: 'warning', message: '名前が長すぎます' };
+            }
+            
+            return { type: 'success', message: '正しい名前形式です' };
+        }
+        
+        // お子さま名バリデーション
+        function validateChildName(value) {
+            // 「○○様(○歳○ヶ月)」の形式をチェック
+            const childPattern = /^.+様\(\d+歳\d+ヶ月\)$/;
+            
+            if (!childPattern.test(value)) {
+                return { type: 'warning', message: '○○様(○歳○ヶ月)の形式で入力してください' };
+            }
+            
+            return { type: 'success', message: '正しい形式です' };
+        }
+        
+        // 時刻の整合性チェック
+        function validateTimeConsistency(rowIndex) {
+            const row = currentData[rowIndex];
+            if (!row) return;
+            
+            const startTime = row['開始時刻'];
+            const endTime = row['終了時刻'];
+            
+            if (!startTime || !endTime) return;
+            
+            // 時刻の形式チェック
+            const timePattern = /^(\d{1,2}):(\d{2})$/;
+            const startMatch = startTime.match(timePattern);
+            const endMatch = endTime.match(timePattern);
+            
+            if (!startMatch || !endMatch) return;
+            
+            const startHour = parseInt(startMatch[1]);
+            const startMinute = parseInt(startMatch[2]);
+            const endHour = parseInt(endMatch[1]);
+            const endMinute = parseInt(endMatch[2]);
+            
+            const startTotalMinutes = startHour * 60 + startMinute;
+            const endTotalMinutes = endHour * 60 + endMinute;
+            
+            // 開始時刻メッセージ要素
+            const startMessageElement = document.getElementById(`validation-${rowIndex}-開始時刻`);
+            const startCellElement = startMessageElement?.closest('.editable-cell');
+            
+            // 終了時刻メッセージ要素
+            const endMessageElement = document.getElementById(`validation-${rowIndex}-終了時刻`);
+            const endCellElement = endMessageElement?.closest('.editable-cell');
+            
+            // 時刻の整合性チェック
+            if (startTotalMinutes >= endTotalMinutes) {
+                // 開始時刻が終了時刻以降の場合
+                if (startCellElement && startMessageElement) {
+                    startCellElement.classList.remove('success');
+                    startCellElement.classList.add('error');
+                    startMessageElement.className = 'validation-message error';
+                    startMessageElement.textContent = '開始時刻が終了時刻以降です';
+                }
+                
+                if (endCellElement && endMessageElement) {
+                    endCellElement.classList.remove('success');
+                    endCellElement.classList.add('error');
+                    endMessageElement.className = 'validation-message error';
+                    endMessageElement.textContent = '終了時刻が開始時刻以前です';
+                }
+            } else {
+                // 時刻が正常な場合
+                const duration = endTotalMinutes - startTotalMinutes;
+                const hours = Math.floor(duration / 60);
+                const minutes = duration % 60;
+                
+                if (startCellElement && startMessageElement && !startMessageElement.textContent.includes('形式')) {
+                    startCellElement.classList.remove('error');
+                    startCellElement.classList.add('success');
+                    startMessageElement.className = 'validation-message success';
+                    startMessageElement.textContent = `利用時間: ${hours}時間${minutes}分`;
+                }
+                
+                if (endCellElement && endMessageElement && !endMessageElement.textContent.includes('形式')) {
+                    endCellElement.classList.remove('error');
+                    endCellElement.classList.add('success');
+                    endMessageElement.className = 'validation-message success';
+                    endMessageElement.textContent = `利用時間: ${hours}時間${minutes}分`;
+                }
+            }
+        }
+        
+        // 行追加関数
+        function addRow() {
+            const newRow = {
+                '利用日': '',
+                '開始時刻': '',
+                '終了時刻': '',
+                'シッター名': '',
+                'お子さま': '',
+                '保育料_非課税': '',
+                '保育料_税込10': '',
+                'オプション料_税込10': '',
+                '交通費_税込11': '',
+                '特別費用_税込10': '',
+                'キャンセル料_不課税': '',
+                '割引額': '',
+                'お支払い額': '',
+                '助成対象金額': ''
+            };
+            
+            currentData.push(newRow);
+            renderTable();
+            updateStatus('新しい行を追加しました', 'success');
+        }
+        
+        // 行削除関数
+        function deleteRow(index) {
+            if (confirm('この行を削除してもよろしいですか？')) {
+                currentData.splice(index, 1);
+                renderTable();
+                updateStatus('行を削除しました', 'success');
+            }
+        }
+        
+        // データ保存関数
+        async function saveData() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            updateStatus('データを保存中...', 'loading');
+            
+            try {
+                const response = await fetch('/api/csv/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ rows: currentData })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                updateStatus('データを保存しました', 'success');
+            } catch (error) {
+                console.error('データ保存エラー:', error);
+                updateStatus('データ保存エラー: ' + error.message, 'error');
+            } finally {
+                isLoading = false;
+            }
+        }
+        
+        // 申請書フォームへの連携
+        function exportToForm() {
+            if (currentData.length === 0) {
+                alert('編集するデータがありません');
+                return;
+            }
+            
+            // データの検証
+            const validationResult = validateExportData(currentData);
+            if (!validationResult.isValid) {
+                alert('データに不備があります：\n' + validationResult.message);
+                return;
+            }
+            
+            // データをローカルストレージに保存
+            localStorage.setItem('invoiceData', JSON.stringify(currentData));
+            
+            // 成功メッセージを表示
+            updateStatus('申請書フォームに移動します...', 'success');
+            
+            // 申請書フォームページに移動
+            setTimeout(() => {
+                window.location.href = 'babysitter-form.html';
+            }, 1000);
+        }
+        
+        // データの検証
+        function validateExportData(data) {
+            const errors = [];
+            
+            data.forEach((row, index) => {
+                const rowNum = index + 1;
+                
+                // 必須フィールドの確認
+                if (!row['利用日']) {
+                    errors.push(`行${rowNum}: 利用日が入力されていません`);
+                }
+                if (!row['開始時刻']) {
+                    errors.push(`行${rowNum}: 開始時刻が入力されていません`);
+                }
+                if (!row['終了時刻']) {
+                    errors.push(`行${rowNum}: 終了時刻が入力されていません`);
+                }
+                if (!row['お子さま']) {
+                    errors.push(`行${rowNum}: お子さまが入力されていません`);
+                }
+                if (!row['お支払い額']) {
+                    errors.push(`行${rowNum}: お支払い額が入力されていません`);
+                }
+                
+                // 日付フォーマットの確認
+                if (row['利用日'] && !row['利用日'].match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                    errors.push(`行${rowNum}: 利用日は YYYY/MM/DD 形式で入力してください`);
+                }
+                
+                // 時刻フォーマットの確認
+                if (row['開始時刻'] && !row['開始時刻'].match(/^\d{1,2}:\d{2}$/)) {
+                    errors.push(`行${rowNum}: 開始時刻は HH:MM 形式で入力してください`);
+                }
+                if (row['終了時刻'] && !row['終了時刻'].match(/^\d{1,2}:\d{2}$/)) {
+                    errors.push(`行${rowNum}: 終了時刻は HH:MM 形式で入力してください`);
+                }
+                
+                // 金額フォーマットの確認
+                if (row['お支払い額'] && !row['お支払い額'].match(/^\d+$/)) {
+                    errors.push(`行${rowNum}: お支払い額は数値で入力してください`);
+                }
+            });
+            
+            return {
+                isValid: errors.length === 0,
+                message: errors.join('\n')
+            };
+        }
+        
+        // データプレビュー機能
+        function previewFormData() {
+            if (currentData.length === 0) {
+                alert('編集するデータがありません');
+                return;
+            }
+            
+            const validationResult = validateExportData(currentData);
+            if (!validationResult.isValid) {
+                alert('データに不備があります：\n' + validationResult.message);
+                return;
+            }
+            
+            // プレビュー情報を生成
+            const preview = generatePreviewInfo(currentData);
+            
+            // プレビューダイアログを表示
+            const previewHtml = `
+                <div style="font-family: monospace; white-space: pre-line; line-height: 1.4;">
+                    <h3>申請書フォームへのデータ連携プレビュー</h3>
+                    <strong>申請者名:</strong> ${preview.applicantName}
+                    <strong>児童名:</strong> ${preview.childName}
+                    <strong>年度:</strong> 令和${preview.year}年度
+                    <strong>月:</strong> ${preview.month}月
+                    <strong>利用記録:</strong> ${preview.recordCount}件
+                    <strong>利用時間合計:</strong> ${preview.totalHours}時間
+                    <strong>支払い額合計:</strong> ¥${preview.totalAmount}
+                    
+                    <hr>
+                    <strong>利用記録詳細:</strong>
+                    ${preview.records}
+                    
+                    <p>上記の内容で申請書フォームに反映されます。</p>
+                </div>
+            `;
+            
+            // カスタムダイアログを表示
+            showCustomDialog(previewHtml, () => {
+                exportToForm();
+            });
+        }
+        
+        // プレビュー情報の生成
+        function generatePreviewInfo(data) {
+            const firstRow = data[0];
+            const childName = firstRow['お子さま'] || '';
+            const applicantName = childName.match(/^([^\s]+)/) ? childName.match(/^([^\s]+)/)[1] : '';
+            
+            const firstDate = firstRow['利用日'] || '';
+            const yearMonth = extractYearMonth(firstDate);
+            
+            let totalMinutes = 0;
+            let totalAmount = 0;
+            const records = [];
+            
+            data.forEach((row, index) => {
+                const startTime = row['開始時刻'];
+                const endTime = row['終了時刻'];
+                const amount = parseInt(row['お支払い額'] || '0');
+                
+                if (startTime && endTime) {
+                    const minutes = calculateMinutes(startTime, endTime);
+                    totalMinutes += minutes;
+                    const hours = Math.floor(minutes / 60);
+                    const mins = minutes % 60;
+                    
+                    records.push(
+                        `${index + 1}. ${row['利用日']} ${startTime}～${endTime} (${hours}時間${mins}分) ¥${amount.toLocaleString()}`
+                    );
+                }
+                
+                totalAmount += amount;
+            });
+            
+            return {
+                applicantName: applicantName,
+                childName: childName,
+                year: yearMonth.year,
+                month: yearMonth.month,
+                recordCount: data.length,
+                totalHours: Math.floor(totalMinutes / 60),
+                totalAmount: totalAmount.toLocaleString(),
+                records: records.join('\n')
+            };
+        }
+        
+        // 年度と月を抽出
+        function extractYearMonth(dateString) {
+            const match = dateString.match(/^(\d{4})\/(\d{1,2})/);
+            if (match) {
+                const year = parseInt(match[1]);
+                const month = parseInt(match[2]);
+                const reiwaYear = year - 2018;
+                return { year: reiwaYear.toString(), month: month.toString() };
+            }
+            return { year: '7', month: '4' };
+        }
+        
+        // 時間差を分で計算
+        function calculateMinutes(startTime, endTime) {
+            const start = parseTime(startTime);
+            const end = parseTime(endTime);
+            
+            if (!start || !end) return 0;
+            
+            let totalMinutes = (end.hour * 60 + end.minute) - (start.hour * 60 + start.minute);
+            if (totalMinutes < 0) totalMinutes += 24 * 60;
+            
+            return totalMinutes;
+        }
+        
+        // 時間文字列をパース
+        function parseTime(timeString) {
+            const match = timeString.match(/^(\d{1,2}):(\d{2})$/);
+            if (match) {
+                return {
+                    hour: parseInt(match[1]),
+                    minute: parseInt(match[2])
+                };
+            }
+            return null;
+        }
+        
+        // カスタムダイアログを表示
+        function showCustomDialog(content, onConfirm) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 10000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            `;
+            
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            `;
+            
+            const buttons = document.createElement('div');
+            buttons.style.cssText = `
+                margin-top: 20px;
+                text-align: right;
+                gap: 10px;
+                display: flex;
+                justify-content: flex-end;
+            `;
+            
+            const confirmBtn = document.createElement('button');
+            confirmBtn.textContent = '申請書フォームへ移動';
+            confirmBtn.className = 'btn btn-primary';
+            confirmBtn.onclick = () => {
+                document.body.removeChild(overlay);
+                onConfirm();
+            };
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'キャンセル';
+            cancelBtn.className = 'btn btn-secondary';
+            cancelBtn.onclick = () => {
+                document.body.removeChild(overlay);
+            };
+            
+            buttons.appendChild(cancelBtn);
+            buttons.appendChild(confirmBtn);
+            
+            dialog.innerHTML = content;
+            dialog.appendChild(buttons);
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+        }
+        
+        // ステータス更新関数
+        function updateStatus(message, type) {
+            const statusBar = document.getElementById('statusBar');
+            statusBar.textContent = message;
+            statusBar.className = `status-bar ${type}`;
+        }
+        
+        // バリデーション統計の更新
+        function updateValidationStats() {
+            const fields = [
+                '利用日', '開始時刻', '終了時刻', 'シッター名', 'お子さま',
+                '保育料_非課税', '保育料_税込10', 'オプション料_税込10', '交通費_税込11',
+                '特別費用_税込10', 'キャンセル料_不課税', '割引額', 'お支払い額', '助成対象金額'
+            ];
+            
+            let totalCells = 0;
+            let errorCells = 0;
+            let warningCells = 0;
+            let successCells = 0;
+            
+            currentData.forEach((row, rowIndex) => {
+                fields.forEach(field => {
+                    totalCells++;
+                    const messageElement = document.getElementById(`validation-${rowIndex}-${field}`);
+                    if (messageElement) {
+                        if (messageElement.classList.contains('error')) {
+                            errorCells++;
+                        } else if (messageElement.classList.contains('warning')) {
+                            warningCells++;
+                        } else if (messageElement.classList.contains('success')) {
+                            successCells++;
+                        }
+                    }
+                });
+            });
+            
+            const statusBar = document.getElementById('statusBar');
+            let statusMessage = `データ検証結果: 全${totalCells}セル`;
+            
+            if (errorCells > 0) {
+                statusMessage += ` | エラー: ${errorCells}件`;
+                statusBar.className = 'status-bar error';
+            } else if (warningCells > 0) {
+                statusMessage += ` | 警告: ${warningCells}件`;
+                statusBar.className = 'status-bar warning';
+            } else {
+                statusMessage += ` | 正常: ${successCells}件`;
+                statusBar.className = 'status-bar success';
+            }
+            
+            statusBar.textContent = statusMessage;
+        }
+    </script>
+</body>
+</html> 
