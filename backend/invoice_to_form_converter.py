@@ -164,8 +164,8 @@ def convert_invoice_to_form(csv_file, output_file=None):
             day_minutes, night_minutes = calculate_duration(start_time, end_time)
             day_range, night_range = get_day_night_time_ranges(start_time, end_time)
             
-            # 金額を取得
-            amount = int(row['お支払い額']) if pd.notna(row['お支払い額']) else 0
+            # 金額を取得（保育料（非課税）を使用）
+            amount = int(row['保育料 (非課税)']) if pd.notna(row['保育料 (非課税)']) else 0
             subsidy_amount = int(row['(一時預かりのみ) 助成対象金額']) if pd.notna(row['(一時預かりのみ) 助成対象金額']) else amount
             
             # 子供の名前を取得
@@ -209,6 +209,24 @@ def convert_invoice_to_form(csv_file, output_file=None):
     page1_total_amount = sum(int(item['amount'].replace(',', '')) for item in first_month_data)
     page1_total_subsidy = sum(item['subsidy_amount'] for item in first_month_data)
     
+    # 全体の合計を計算
+    all_data = []
+    for month_data in monthly_data.values():
+        all_data.extend(month_data)
+    
+    total_day_minutes = sum(item['day_minutes'] for item in all_data)
+    total_night_minutes = sum(item['night_minutes'] for item in all_data)
+    total_amount = sum(int(item['amount'].replace(',', '')) for item in all_data)
+    total_subsidy = sum(item['subsidy_amount'] for item in all_data)
+    
+    # 全体の補助基準額を計算（日中2,500円/時 + 夜間3,500円/時）
+    total_day_hours = total_day_minutes // 60
+    total_night_hours = total_night_minutes // 60
+    total_subsidy_base = total_day_hours * 2500 + total_night_hours * 3500
+    
+    # 交付請求額（実支払額と補助基準額の小さい方）
+    total_request_amount = min(total_amount, total_subsidy_base)
+    
     form_data = {
         "year": str(datetime.now().year - 2018),  # 令和年を計算
         "applicantName": applicant_name,
@@ -219,11 +237,15 @@ def convert_invoice_to_form(csv_file, output_file=None):
             "dayTotalTime": minutes_to_duration_str(page1_total_day_minutes),
             "nightTotalTime": minutes_to_duration_str(page1_total_night_minutes),
             "totalAmount": f"{page1_total_amount:,}",
-            "dayHours": str(page1_total_day_minutes // 60),
-            "nightHours": str(page1_total_night_minutes // 60),
-            "subsidyAmount": f"{page1_total_subsidy:,}",
-            "requestAmount": f"{page1_total_amount:,}",
-            "usageHours": str((page1_total_day_minutes + page1_total_night_minutes) // 60)
+            "dayHours": str(total_day_hours),
+            "nightHours": str(total_night_hours),
+            "subsidyAmount": f"{total_subsidy_base:,}",
+            "requestAmount": f"{total_request_amount:,}",
+            "usageHours": str(total_day_hours + total_night_hours),
+            # 他ページ含む総計用のデータを追加
+            "grandTotalDayTime": minutes_to_duration_str(total_day_minutes),
+            "grandTotalNightTime": minutes_to_duration_str(total_night_minutes),
+            "grandTotalAmount": f"{total_amount:,}"
         }
     }
     
@@ -287,22 +309,13 @@ def convert_invoice_to_form(csv_file, output_file=None):
                 "usageHours": str((month2_day_minutes + month2_night_minutes) // 60)
             }
         
-        # 総合計を計算
-        all_data = []
-        for month_data in monthly_data.values():
-            all_data.extend(month_data)
-        
-        total_day_minutes = sum(item['day_minutes'] for item in all_data)
-        total_night_minutes = sum(item['night_minutes'] for item in all_data)
-        total_amount = sum(int(item['amount'].replace(',', '')) for item in all_data)
-        total_subsidy = sum(item['subsidy_amount'] for item in all_data)
-        
+        # 総合計を設定（既に計算済み）
         page2_data["grandTotal"] = {
-            "totalDayHours": str(total_day_minutes // 60),
-            "totalNightHours": str(total_night_minutes // 60),
-            "totalSubsidyAmount": f"{total_subsidy:,}",
-            "totalRequestAmount": f"{total_amount:,}",
-            "totalUsageHours": str((total_day_minutes + total_night_minutes) // 60)
+            "totalDayHours": str(total_day_hours),
+            "totalNightHours": str(total_night_hours),
+            "totalSubsidyAmount": f"{total_subsidy_base:,}",
+            "totalRequestAmount": f"{total_request_amount:,}",
+            "totalUsageHours": str(total_day_hours + total_night_hours)
         }
         
         form_data["page2"] = page2_data

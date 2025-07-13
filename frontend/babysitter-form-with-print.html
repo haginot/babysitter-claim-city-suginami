@@ -1184,9 +1184,9 @@
         // JSONデータをフォームに読み込む関数
         async function loadFormData() {
             try {
-                const response = await fetch('../data/form-data.json');
+                const response = await fetch('/data/form_data.json');
                 if (!response.ok) {
-                    console.log('form-data.jsonが見つかりません。空のフォームを表示します。');
+                    console.log('form_data.jsonが見つかりません。空のフォームを表示します。');
                     return;
                 }
                 
@@ -1239,6 +1239,14 @@
                         if (inputs[2] && data.page1.totalAmount) inputs[2].value = data.page1.totalAmount;
                     }
                     
+                    // 他ページ含む総計行を設定
+                    if (totalRows[1] && data.page1) {
+                        const inputs = totalRows[1].querySelectorAll('input');
+                        if (inputs[0] && data.page1.grandTotalDayTime) inputs[0].value = data.page1.grandTotalDayTime;
+                        if (inputs[1] && data.page1.grandTotalNightTime) inputs[1].value = data.page1.grandTotalNightTime;
+                        if (inputs[2] && data.page1.grandTotalAmount) inputs[2].value = data.page1.grandTotalAmount;
+                    }
+                    
                     // 計算セクションを設定
                     const calcInputs = document.querySelectorAll('#page1 .calculation-section input');
                     if (calcInputs[0] && data.page1.dayHours) calcInputs[0].value = data.page1.dayHours;
@@ -1268,6 +1276,15 @@
                                 if (inputs[5] && rowData.amount) inputs[5].value = rowData.amount;
                             }
                         });
+                        
+                        // テーブル1の合計行を設定
+                        const table1TotalRow = page2Tables[0].querySelector('tbody tr[style*="background-color"]');
+                        if (table1TotalRow) {
+                            const inputs = table1TotalRow.querySelectorAll('input');
+                            if (inputs[0] && data.page2.table1.dayTotalTime) inputs[0].value = data.page2.table1.dayTotalTime;
+                            if (inputs[1] && data.page2.table1.nightTotalTime) inputs[1].value = data.page2.table1.nightTotalTime;
+                            if (inputs[2] && data.page2.table1.totalAmount) inputs[2].value = data.page2.table1.totalAmount;
+                        }
                     }
                     
                     // テーブル2
@@ -1284,6 +1301,15 @@
                                 if (inputs[5] && rowData.amount) inputs[5].value = rowData.amount;
                             }
                         });
+                        
+                        // テーブル2の合計行を設定
+                        const table2TotalRow = page2Tables[1].querySelector('tbody tr[style*="background-color"]');
+                        if (table2TotalRow) {
+                            const inputs = table2TotalRow.querySelectorAll('input');
+                            if (inputs[0] && data.page2.table2.dayTotalTime) inputs[0].value = data.page2.table2.dayTotalTime;
+                            if (inputs[1] && data.page2.table2.nightTotalTime) inputs[1].value = data.page2.table2.nightTotalTime;
+                            if (inputs[2] && data.page2.table2.totalAmount) inputs[2].value = data.page2.table2.totalAmount;
+                        }
                     }
                 }
                 
