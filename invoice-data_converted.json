@@ -1,0 +1,40 @@
+{
+  "year": "7",
+  "applicantName": "杉並 太郎",
+  "childName": "杉並 すけ(2歳1ヶ月)",
+  "month": "5",
+  "page1": {
+    "rows": [
+      {
+        "date": "18",
+        "dayTime": "14:30 ～ 18:00",
+        "dayDuration": "3時間30分",
+        "nightTime": "",
+        "nightDuration": "",
+        "amount": "9,910",
+        "subsidy_amount": 9100,
+        "day_minutes": 210,
+        "night_minutes": 0
+      },
+      {
+        "date": "25",
+        "dayTime": "10:00 ～ 17:00",
+        "dayDuration": "7時間00分",
+        "nightTime": "",
+        "nightDuration": "",
+        "amount": "19,016",
+        "subsidy_amount": 18200,
+        "day_minutes": 420,
+        "night_minutes": 0
+      }
+    ],
+    "dayTotalTime": "10時間30分",
+    "nightTotalTime": "",
+    "totalAmount": "28,926",
+    "dayHours": "10",
+    "nightHours": "0",
+    "subsidyAmount": "27,300",
+    "requestAmount": "28,926",
+    "usageHours": "10"
+  }
+}
