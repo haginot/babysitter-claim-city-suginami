@@ -5,23 +5,7 @@ services:
     build: .
     container_name: babysitter-form
     ports:
-      - "8080:80"
+      - "8081:80"
     volumes:
       - .:/usr/share/nginx/html:ro
-    restart: unless-stopped
-    depends_on:
-      - api
-
-  api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: babysitter-api
-    ports:
-      - "5001:5000"
-    volumes:
-      - ./data:/app/data
-    environment:
-      - FLASK_ENV=production
-      - FLASK_DEBUG=0
     restart: unless-stopped
