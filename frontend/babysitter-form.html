@@ -1221,13 +1221,11 @@
                 if (jsonData) {
                     data = jsonData;
                 } else {
-                    // 通常はform_data.jsonを読み込む
-                    const response = await fetch('/data/form_data.json');
-                    if (!response.ok) {
-                        console.log('form_data.jsonが見つかりません。空のフォームを表示します。');
-                        return;
-                    }
-                    data = await response.json();
+                    // データがない場合はStep 1にリダイレクト
+                    console.log('データが見つかりません。Step 1からやり直してください。');
+                    alert('データが見つかりません。PDFファイルのアップロードから開始してください。');
+                    window.location.href = '/frontend/pdf-extractor.html';
+                    return;
                 }
                 
                 // 年度を設定
@@ -1372,14 +1370,12 @@
         // データソースを追跡するフラグ
         let isManuallyLoadedData = false;
 
-        // 自動データ読み込み機能
+        // 自動データ読み込み機能（廃止）
+        // 新しいワークフローでは、データは常にStep 2から渡されるため不要
         function autoLoadData() {
-            // JSONデータを読み込む
-            loadFormData().then(() => {
-                console.log('データを読み込みました');
-            }).catch(error => {
-                console.error('データ読み込みエラー:', error);
-            });
+            // Step 1にリダイレクト
+            console.log('データが見つかりません。Step 1からやり直してください。');
+            window.location.href = '/frontend/pdf-extractor.html';
         }
 
         // 定期的なデータ更新機能
