@@ -9,21 +9,27 @@
 - JSONファイルからのデータ読み込み
 - 印刷時の入力フィールド枠線非表示
 - ズーム機能（50%〜150%）
+- **NEW** PDFからテーブル抽出機能（pdfplumber使用）
 
 ## ディレクトリ構造
 ```
 babysitter-claim-city-suginami/
-├── frontend/              # フロントエンド（HTMLファイル）
-│   └── babysitter-form.html    # 申請書フォーム
-├── data/                  # データファイル
-│   └── form_data.json          # 申請書データ（直接編集）
-├── docs/                  # ドキュメント
+├── frontend/                    # フロントエンド（HTMLファイル）
+│   ├── babysitter-form.html     # 申請書フォーム
+│   └── pdf-extractor.html       # PDF抽出ツール
+├── backend/                     # バックエンド（Python API）
+│   ├── app.py                   # Flask APIサーバー
+│   ├── requirements.txt         # Python依存パッケージ
+│   └── Dockerfile               # バックエンド用Dockerfile
+├── data/                        # データファイル
+│   └── form_data.json           # 申請書データ（直接編集）
+├── docs/                        # ドキュメント
 │   ├── template.pdf
 │   └── sample.pdf
-├── docker-compose.yml     # Docker設定
-├── Dockerfile             # Nginx用
-├── nginx.conf             # Webサーバー設定
-├── start.sh               # 起動スクリプト
+├── docker-compose.yml           # Docker設定
+├── Dockerfile                   # Nginx用
+├── nginx.conf                   # Webサーバー設定
+├── start.sh                     # 起動スクリプト
 └── README.md
 ```
 
@@ -43,13 +49,23 @@ docker-compose down
 
 起動後、以下のURLにアクセスできます：
 - 申請書フォーム: http://localhost:8081/frontend/babysitter-form.html
+- PDF抽出ツール: http://localhost:8081/frontend/pdf-extractor.html
 - または: http://localhost:8081/ （自動的にフォームにリダイレクト）
 
 ### 基本的な使い方
+
+#### 申請書フォームの使い方
 1. `data/form_data.json`ファイルを編集してデータを入力
 2. ブラウザで http://localhost:8081/ を開く
 3. 申請書が表示されます
 4. 印刷ボタンをクリックして印刷
+
+#### PDF抽出ツールの使い方
+1. ブラウザで http://localhost:8081/frontend/pdf-extractor.html を開く
+2. 請求書PDFファイルをアップロード（ドラッグ&ドロップまたはファイル選択）
+3. 「テーブルを抽出」ボタンをクリック
+4. 抽出されたテーブルがプレビュー表示されます
+5. 必要に応じて、CSVでエクスポートまたはクリップボードにコピー
 
 ### データの編集方法
 `data/form_data.json`ファイルを直接編集してください。ファイル保存後、ブラウザで「データ更新」ボタンをクリックすると、最新のデータが反映されます

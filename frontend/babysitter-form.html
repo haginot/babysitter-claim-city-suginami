@@ -553,12 +553,21 @@
         
         <div class="toolbar-divider"></div>
         
-        <button id="refreshBtn" onclick="autoLoadData()">🔄 データ更新</button>
+        <button id="refreshBtn">🔄 データ更新</button>
         <button id="printBtn">🖨️ 印刷</button>
         <button id="paginateBtn">📄 ページ分割</button>
-        
+
         <div class="toolbar-divider"></div>
-        
+
+        <button id="loadJsonBtn">📂 JSONファイルを読み込む</button>
+        <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+
+        <div class="toolbar-divider"></div>
+
+        <a href="/frontend/pdf-extractor.html" style="color: #2196F3; text-decoration: none; padding: 8px 15px; background: #E3F2FD; border-radius: 4px; font-size: 14px;">📋 PDF抽出ツール</a>
+
+        <div class="toolbar-divider"></div>
+
         <span id="pageInfo">ページ 1-2</span>
         <span style="margin-left: 20px; color: #666; font-size: 12px;">📋 表示専用モード</span>
     </div>
@@ -886,11 +895,57 @@
         const printBtn = document.getElementById('printBtn');
         const paginateBtn = document.getElementById('paginateBtn');
         const pageInfo = document.getElementById('pageInfo');
+        const loadJsonBtn = document.getElementById('loadJsonBtn');
+        const jsonFileInput = document.getElementById('jsonFileInput');
 
         // イベントリスナーの設定
         if (zoomSelect) zoomSelect.addEventListener('change', changeZoom);
         if (printBtn) printBtn.addEventListener('click', printDocument);
         if (paginateBtn) paginateBtn.addEventListener('click', paginateContent);
+
+        // データ更新ボタン
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                // 手動読み込みフラグをリセットして、デフォルトデータに戻す
+                isManuallyLoadedData = false;
+                autoLoadData();
+            });
+        }
+
+        // JSONファイル読み込みボタン
+        if (loadJsonBtn) {
+            loadJsonBtn.addEventListener('click', function() {
+                jsonFileInput.click();
+            });
+        }
+
+        // JSONファイル選択時の処理
+        if (jsonFileInput) {
+            jsonFileInput.addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    const text = await file.text();
+                    const jsonData = JSON.parse(text);
+
+                    // JSONデータをフォームに読み込む
+                    await loadFormData(jsonData);
+
+                    // 手動読み込みフラグを設定
+                    isManuallyLoadedData = true;
+
+                    alert('JSONファイルを読み込みました');
+
+                    // 入力をリセット（同じファイルを再度選択可能にする）
+                    jsonFileInput.value = '';
+                } catch (error) {
+                    alert('JSONファイルの読み込みに失敗しました: ' + error.message);
+                    console.error('JSON読み込みエラー:', error);
+                }
+            });
+        }
 
         // サイドバーの開閉
         function toggleSidebar() {
@@ -1171,15 +1226,22 @@
         }
 
         // JSONデータをフォームに読み込む関数
-        async function loadFormData() {
+        async function loadFormData(jsonData = null) {
             try {
-                const response = await fetch('/data/form_data.json');
-                if (!response.ok) {
-                    console.log('form_data.jsonが見つかりません。空のフォームを表示します。');
-                    return;
+                let data;
+
+                // 引数としてJSONデータが渡された場合はそれを使用
+                if (jsonData) {
+                    data = jsonData;
+                } else {
+                    // 通常はform_data.jsonを読み込む
+                    const response = await fetch('/data/form_data.json');
+                    if (!response.ok) {
+                        console.log('form_data.jsonが見つかりません。空のフォームを表示します。');
+                        return;
+                    }
+                    data = await response.json();
                 }
-                
-                const data = await response.json();
                 
                 // 年度を設定
                 const yearElement = document.querySelector('.year-field .text-display');
@@ -1320,6 +1382,9 @@
             }
         }
 
+        // データソースを追跡するフラグ
+        let isManuallyLoadedData = false;
+
         // 自動データ読み込み機能
         function autoLoadData() {
             // JSONデータを読み込む
@@ -1329,9 +1394,14 @@
                 console.error('データ読み込みエラー:', error);
             });
         }
-        
+
         // 定期的なデータ更新機能
         function startAutoRefresh() {
+            // 手動で読み込まれたデータの場合は自動更新をスキップ
+            if (isManuallyLoadedData) {
+                console.log('手動で読み込まれたデータのため、自動更新をスキップします');
+                return;
+            }
             setInterval(() => {
                 autoLoadData();
             }, 30000); // 30秒ごとに更新
@@ -1339,8 +1409,34 @@
         
         // 初期化
         document.addEventListener('DOMContentLoaded', function() {
-            // 自動データ読み込み
-            autoLoadData();
+            // URLパラメータをチェック
+            const urlParams = new URLSearchParams(window.location.search);
+            const loadExtracted = urlParams.get('loadExtracted');
+
+            if (loadExtracted === 'true') {
+                // localStorageから抽出データを読み込む
+                const extractedData = localStorage.getItem('extractedFormData');
+                if (extractedData) {
+                    try {
+                        const jsonData = JSON.parse(extractedData);
+                        loadFormData(jsonData);
+                        // データ読み込み後にlocalStorageをクリア
+                        localStorage.removeItem('extractedFormData');
+                        // URLパラメータをクリア
+                        window.history.replaceState({}, '', '/frontend/babysitter-form.html');
+                        // 手動読み込みフラグを設定
+                        isManuallyLoadedData = true;
+                    } catch (error) {
+                        console.error('抽出データの読み込みエラー:', error);
+                        autoLoadData();
+                    }
+                } else {
+                    autoLoadData();
+                }
+            } else {
+                // 通常の自動データ読み込み
+                autoLoadData();
+            }
             
             // 定期的なデータ更新を開始
             setTimeout(() => {
