@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ベビーシッター利用内訳書作成ツール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero-title {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 20px 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+
+        .feature-card {
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .sample-section {
+            margin: 60px 0;
+            text-align: center;
+        }
+
+        .sample-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .sample-image-container {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .sample-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .steps-section {
+            margin: 60px 0;
+        }
+
+        .steps-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .steps {
+            display: grid;
+            gap: 20px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .step-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 20px;
+            min-width: 60px;
+        }
+
+        .step-content h3 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .step-content p {
+            color: #666;
+        }
+
+        .info-section {
+            background: #e8f4f8;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 40px 0;
+        }
+
+        .info-title {
+            font-size: 1.3rem;
+            color: #0066cc;
+            margin-bottom: 15px;
+        }
+
+        .info-content {
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .info-link {
+            color: #0066cc;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .info-link:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .hero-title {
+                font-size: 1.5rem;
+            }
+
+            .main-content {
+                padding: 40px 20px;
+            }
+
+            .cta-button {
+                padding: 15px 40px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ベビーシッター利用内訳書作成ツール</h1>
+            <p class="subtitle">領収書から簡単に申請書類を作成</p>
+        </header>
+
+        <div class="main-content">
+            <div class="hero-section">
+                <h2 class="hero-title">東京都「ベビーシッター利用支援事業」の申請をもっと簡単に</h2>
+                <p class="hero-description">
+                    ベビーシッター事業者が発行した領収書のPDFをアップロードするだけで、<br>
+                    申請に必要な「利用内訳書」を自動作成できます。<br>
+                    面倒な手入力や計算は不要です。
+                </p>
+                <a href="/frontend/pdf-extractor.html" class="cta-button">今すぐ始める →</a>
+            </div>
+
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">📄</div>
+                    <h3 class="feature-title">PDFを読み込み</h3>
+                    <p class="feature-description">領収書のPDFファイルをアップロードするだけで、利用内訳を自動抽出します</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✏️</div>
+                    <h3 class="feature-title">簡単編集</h3>
+                    <p class="feature-description">抽出されたデータは、必要に応じて編集画面で修正できます</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🖨️</div>
+                    <h3 class="feature-title">印刷して提出</h3>
+                    <p class="feature-description">整形された利用内訳書を印刷して、そのまま区役所に提出できます</p>
+                </div>
+            </div>
+
+            <div class="sample-section">
+                <h2 class="sample-title">作成できる利用内訳書のサンプル</h2>
+                <div class="sample-image-container">
+                    <img src="/assets/images/samples/sample-1.png" alt="利用内訳書サンプル" class="sample-image">
+                </div>
+            </div>
+
+            <div class="steps-section">
+                <h2 class="steps-title">使い方は3ステップ</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>PDFをアップロード</h3>
+                            <p>ベビーシッター事業者から受け取った領収書のPDFファイルを選択します</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>データを確認・編集</h3>
+                            <p>自動抽出されたデータを確認し、必要に応じて修正します</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>印刷して提出</h3>
+                            <p>作成された利用内訳書を印刷し、区役所に提出します</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3 class="info-title">ベビーシッター利用支援事業（一時預かり利用支援）について</h3>
+                <div class="info-content">
+                    <p>
+                        東京都が実施する「ベビーシッター利用支援事業（一時預かり利用支援）」は、<br>
+                        保育所等に入所できず待機している児童や、保護者の疾病等により緊急・一時的に保育が必要な児童を対象に、<br>
+                        ベビーシッターの利用料の一部を助成する制度です。
+                    </p>
+                    <p style="margin-top: 15px;">
+                        詳細は東京都福祉局の公式サイトをご確認ください：<br>
+                        <a href="https://www.fukushi.metro.tokyo.lg.jp/kodomo/hoiku/bs/bsitijiazukari"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="info-link">
+                            https://www.fukushi.metro.tokyo.lg.jp/kodomo/hoiku/bs/bsitijiazukari
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="hero-section" style="margin-top: 60px;">
+                <a href="/frontend/pdf-extractor.html" class="cta-button">利用内訳書を作成する →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 ベビーシッター利用内訳書作成ツール</p>
+        </footer>
+    </div>
+</body>
+</html>
