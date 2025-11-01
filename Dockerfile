@@ -42,8 +42,11 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
     echo 'stderr_logfile_maxbytes=0' >> /etc/supervisord.conf
 
-# Nginxを80ポートで起動
-EXPOSE 80
+# デフォルトポートを80に設定（Railwayの場合は環境変数で上書き）
+ENV PORT=80
 
-# Supervisorで両方のプロセスを起動
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+# ポートを公開
+EXPOSE ${PORT}
+
+# 起動時にPORT環境変数を使用してNginxのリスニングポートを設定
+CMD /bin/sh -c "sed -i 's/listen 80;/listen ${PORT};/g' /etc/nginx/conf.d/default.conf && /usr/bin/supervisord -c /etc/supervisord.conf"
