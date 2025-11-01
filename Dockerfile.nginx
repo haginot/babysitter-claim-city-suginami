@@ -6,6 +6,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # フロントエンドのファイルをコピー
 COPY frontend /usr/share/nginx/html/frontend
 
+# アセットファイルをコピー
+COPY assets /usr/share/nginx/html/assets
+
 # ポートを公開
 EXPOSE 80
 
