@@ -115,13 +115,66 @@ docker-compose down
 - `docs/template.pdf` - 元のPDFテンプレート
 - `docs/sample.pdf` - 記入例
 
+## 本番環境へのデプロイ（無料）
+
+### Renderでのデプロイ（推奨）
+
+Renderを使用すると、無料で本アプリケーションを公開できます。
+
+**デプロイ手順:**
+
+1. **GitHubにプッシュ**
+   ```bash
+   git push origin main
+   ```
+
+2. **Renderアカウント作成**
+   - [Render](https://render.com)でアカウント作成
+   - GitHubアカウントで連携
+
+3. **自動デプロイ**
+   - "New" → "Blueprint" を選択
+   - このリポジトリを選択
+   - `render.yaml`が自動検出されて、2つのサービスがデプロイされます:
+     - `babysitter-api` (Flask API)
+     - `babysitter-frontend` (Nginx)
+
+4. **API URLを設定**
+   - フロントエンドサービスの環境変数に以下を追加:
+     ```
+     API_URL=https://babysitter-api.onrender.com
+     ```
+   - `frontend/pdf-extractor.html`と`frontend/json-editor.html`のAPI URLを更新
+
+5. **アクセス**
+   - `https://babysitter-frontend.onrender.com` にアクセス
+
+**注意事項:**
+- 無料プランは15分間アクセスがないとスリープします
+- 初回アクセス時は起動に30秒程度かかります
+- 月に750時間まで無料で利用可能
+
+### その他のデプロイオプション
+
+#### Railway
+1. [Railway](https://railway.app)でアカウント作成
+2. GitHubリポジトリをインポート
+3. 自動的にDocker Composeを検出してデプロイ
+4. 月$5相当の無料クレジットあり
+
+#### Fly.io
+1. [Fly.io](https://fly.io)でアカウント作成（クレジットカード登録必要）
+2. `flyctl`をインストール
+3. `flyctl launch`でデプロイ
+4. 無料プランで3つのアプリまで
+
 ## 注意事項
-- `data/form_data.json`ファイルが存在しない場合は、空のフォームが表示されます
+- `data/form_data.json`ファイルは削除されました。PDFアップロードから開始してください
 - Dockerを使用した起動を推奨します（./start.sh）
 - ローカルでの単体起動の場合は、簡易的なWebサーバーを使用してください：
   ```bash
   # Python 3の場合
   python -m http.server 8000
 
-  # その後、http://localhost:8000/frontend/babysitter-form.html にアクセス
+  # その後、http://localhost:8000/frontend/pdf-extractor.html にアクセス
   ```
