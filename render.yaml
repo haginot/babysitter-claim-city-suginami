@@ -1,27 +1,13 @@
 services:
-  # バックエンドAPI (Flask)
+  # Nginx + Flask統合サービス
   - type: web
-    name: babysitter-api
-    env: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    name: babysitter-app
+    runtime: docker
+    repo: https://github.com/haginot/babysitter-claim-city-suginami
+    branch: feature/table-editor
+    dockerfilePath: ./Dockerfile
     plan: free
-    healthCheckPath: /health
+    healthCheckPath: /
     envVars:
       - key: PORT
-        value: 5000
-    autoDeploy: true
-
-  # フロントエンド (Nginx)
-  - type: web
-    name: babysitter-frontend
-    env: docker
-    dockerfilePath: ./Dockerfile.nginx
-    plan: free
-    autoDeploy: true
-    envVars:
-      - key: API_SERVICE_URL
-        fromService:
-          type: web
-          name: babysitter-api
-          property: hostport
+        value: 10000
