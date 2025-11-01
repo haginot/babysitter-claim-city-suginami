@@ -372,4 +372,6 @@ def convert_to_json():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Gunicorn経由で起動される場合はこのブロックは実行されない
+    # 開発環境でのみ使用
+    app.run(host='0.0.0.0', port=port, debug=False)

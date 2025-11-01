@@ -23,7 +23,7 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo 'user=root' >> /etc/supervisord.conf && \
     echo '' >> /etc/supervisord.conf && \
     echo '[program:flask]' >> /etc/supervisord.conf && \
-    echo 'command=python3 /app/backend/app.py' >> /etc/supervisord.conf && \
+    echo 'command=python3 -m gunicorn -w 4 -b 0.0.0.0:5000 app:app' >> /etc/supervisord.conf && \
     echo 'directory=/app/backend' >> /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
