@@ -269,8 +269,8 @@ def convert_to_json():
         # form_data.json形式に変換
         result = {
             "year": "7",  # デフォルト値（令和7年）
-            "applicantName": "杉並 太郎",  # デフォルト値
-            "childName": "怜奈",  # デフォルト値
+            "applicantName": "杉並 なみ",  # デフォルト値
+            "childName": "杉並 すけ",  # デフォルト値
             "month": sorted_months[0]
         }
 
