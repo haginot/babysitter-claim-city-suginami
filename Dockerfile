@@ -14,6 +14,9 @@ COPY backend/app.py /app/backend/
 # フロントエンドのファイルをコピー
 COPY frontend /usr/share/nginx/html/frontend
 
+# アセットファイルをコピー
+COPY assets /usr/share/nginx/html/assets
+
 # Nginxの設定をコピー（Render用）
 COPY nginx.render.conf /etc/nginx/conf.d/default.conf
 
