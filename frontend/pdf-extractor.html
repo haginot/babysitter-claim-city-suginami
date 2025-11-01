@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF テーブル抽出ツール</title>
+    <title>Step 1: PDFファイルから利用状況を抽出 - 杉並区ベビーシッター利用支援申請</title>
     <style>
         * {
             box-sizing: border-box;
@@ -268,22 +268,22 @@
 <body>
     <div class="container">
         <div class="navigation">
-            <a href="/frontend/babysitter-form.html">← 申請書フォームに戻る</a>
+            <div style="color: #2196F3; font-weight: bold; margin-bottom: 10px;">Step 1 / 3</div>
         </div>
 
-        <h1>PDF テーブル抽出ツール</h1>
-        <p class="subtitle">請求書PDFから「ご利用日」テーブルを抽出してプレビューします</p>
+        <h1>PDFファイルから利用状況を抽出</h1>
+        <p class="subtitle">請求書PDFをアップロードしてください（最大3ファイル）</p>
 
         <div class="error" id="errorMessage"></div>
         <div class="success" id="successMessage"></div>
 
         <div class="upload-section" id="uploadSection">
             <label for="fileInput" class="file-input-label">
-                PDFファイルを選択（複数可）
+                PDFファイルを選択（最大3ファイル）
             </label>
             <input type="file" id="fileInput" accept=".pdf" multiple>
             <div class="file-info" id="fileInfo">
-                または、ファイルをここにドラッグ&ドロップ（複数可）
+                または、ファイルをここにドラッグ&ドロップ（最大3ファイル）
             </div>
         </div>
 
@@ -306,47 +306,20 @@
                 </table>
             </div>
             <div class="actions">
-                <button class="btn btn-primary" id="exportCsvBtn">CSVでエクスポート</button>
-                <button class="btn btn-secondary" id="copyBtn">クリップボードにコピー</button>
-                <button class="btn btn-secondary" id="convertJsonBtn">JSONに変換してダウンロード</button>
-                <button class="btn btn-secondary" id="editJsonBtn">JSONに変換して編集</button>
-                <button class="btn btn-secondary" id="loadToFormBtn">JSONに変換して申請書に読み込む</button>
+                <button class="btn btn-primary" id="nextToEditorBtn" style="font-size: 16px; padding: 12px 40px;">次へ: JSONを編集 →</button>
             </div>
         </div>
 
-        <!-- JSON編集モーダル -->
-        <div id="jsonEditorModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; overflow: auto;">
-            <div style="max-width: 900px; margin: 50px auto; background: white; border-radius: 8px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <h2 style="margin-top: 0;">JSONデータを編集</h2>
-                <p style="color: #666; margin-bottom: 20px;">年度、申請者名、児童名などを編集できます</p>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">年度（令和）</label>
-                    <input type="text" id="editYear" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">申請者名</label>
-                    <input type="text" id="editApplicantName" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">児童名</label>
-                    <input type="text" id="editChildName" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">JSONデータ（上級者向け）</label>
-                    <textarea id="editJsonData" style="width: 100%; height: 300px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 12px;"></textarea>
-                </div>
-
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button id="cancelEditBtn" class="btn" style="background: #999; color: white;">キャンセル</button>
-                    <button id="downloadEditedJsonBtn" class="btn btn-primary">ダウンロード</button>
-                    <button id="loadEditedJsonBtn" class="btn btn-secondary">申請書に読み込む</button>
-                </div>
+        <!-- デバッグ用のアクション（折りたたみ可能） -->
+        <details style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">
+            <summary style="cursor: pointer; font-weight: bold; color: #666;">デバッグオプション</summary>
+            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" id="exportCsvBtn" style="font-size: 12px;">CSVでエクスポート</button>
+                <button class="btn btn-secondary" id="copyBtn" style="font-size: 12px;">クリップボードにコピー</button>
+                <button class="btn btn-secondary" id="convertJsonBtn" style="font-size: 12px;">JSONダウンロード</button>
             </div>
-        </div>
+        </details>
+
 
         <div class="table-preview" id="debugPreview" style="display: none;">
             <h2>デバッグ情報（抽出されたすべてのテーブル）</h2>
@@ -371,24 +344,17 @@
         const exportCsvBtn = document.getElementById('exportCsvBtn');
         const copyBtn = document.getElementById('copyBtn');
         const convertJsonBtn = document.getElementById('convertJsonBtn');
-        const editJsonBtn = document.getElementById('editJsonBtn');
-        const loadToFormBtn = document.getElementById('loadToFormBtn');
+        const nextToEditorBtn = document.getElementById('nextToEditorBtn');
 
-        // JSON編集モーダル関連
-        const jsonEditorModal = document.getElementById('jsonEditorModal');
-        const editYear = document.getElementById('editYear');
-        const editApplicantName = document.getElementById('editApplicantName');
-        const editChildName = document.getElementById('editChildName');
-        const editJsonData = document.getElementById('editJsonData');
-        const cancelEditBtn = document.getElementById('cancelEditBtn');
-        const downloadEditedJsonBtn = document.getElementById('downloadEditedJsonBtn');
-        const loadEditedJsonBtn = document.getElementById('loadEditedJsonBtn');
-
-        let currentJsonData = null;
 
         // ファイル選択時
         fileInput.addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
+            if (files.length > 3) {
+                showError('ファイルは最大3つまでアップロード可能です');
+                fileInput.value = '';
+                return;
+            }
             if (files.length > 0) {
                 handleFileSelect(files);
             }
@@ -410,6 +376,10 @@
             uploadSection.classList.remove('dragover');
 
             const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+            if (files.length > 3) {
+                showError('ファイルは最大3つまでアップロード可能です');
+                return;
+            }
             if (files.length > 0) {
                 fileInput.files = e.dataTransfer.files;
                 handleFileSelect(files);
@@ -675,8 +645,8 @@
             }
         });
 
-        // JSONに変換して編集
-        editJsonBtn.addEventListener('click', async function() {
+        // 「次へ: JSONを編集」ボタン
+        nextToEditorBtn.addEventListener('click', async function() {
             if (!extractedData) return;
 
             try {
@@ -700,13 +670,9 @@
                 }
 
                 if (data.success && data.data) {
-                    // JSONデータを保存して編集モーダルを表示
-                    currentJsonData = data.data;
-                    editYear.value = data.data.year || '7';
-                    editApplicantName.value = data.data.applicantName || '';
-                    editChildName.value = data.data.childName || '';
-                    editJsonData.value = JSON.stringify(data.data, null, 2);
-                    jsonEditorModal.style.display = 'block';
+                    // JSONデータをlocalStorageに保存してStep2へ遷移
+                    localStorage.setItem('extractedFormData', JSON.stringify(data.data));
+                    window.location.href = '/frontend/json-editor.html';
                 } else {
                     throw new Error('変換結果が無効です');
                 }
