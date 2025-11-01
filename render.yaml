@@ -1,0 +1,27 @@
+services:
+  # バックエンドAPI (Flask)
+  - type: web
+    name: babysitter-api
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 5000
+    autoDeploy: true
+
+  # フロントエンド (Nginx)
+  - type: web
+    name: babysitter-frontend
+    env: docker
+    dockerfilePath: ./Dockerfile.nginx
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: API_SERVICE_URL
+        fromService:
+          type: web
+          name: babysitter-api
+          property: hostport

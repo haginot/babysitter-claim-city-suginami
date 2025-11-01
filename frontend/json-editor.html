@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 2: JSONデータを編集 - 杉並区ベビーシッター利用支援申請</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .navigation {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navigation a {
+            color: #2196F3;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+
+        .step-indicator {
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
+        input.error {
+            border-color: #f44336;
+        }
+
+        textarea {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            min-height: 400px;
+            resize: vertical;
+        }
+
+        .error-message {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .success-message {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.active {
+            display: block;
+        }
+
+        .validation-status {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .validation-status.valid {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .validation-status.invalid {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: space-between;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-back {
+            background-color: #999;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background-color: #777;
+        }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            padding: 12px 40px;
+        }
+
+        .btn-primary:hover {
+            background-color: #45a049;
+        }
+
+        .btn-primary:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <a href="/frontend/pdf-extractor.html">← 戻る: PDFを再選択</a>
+            <div class="step-indicator">Step 2 / 3</div>
+        </div>
+
+        <h1>JSONデータを編集</h1>
+        <p class="subtitle">申請情報を編集してください</p>
+
+        <div id="successMessage" class="success-message"></div>
+
+        <div id="validationStatus" class="validation-status valid">
+            ✓ JSONデータは正常です
+        </div>
+
+        <div class="info-box">
+            <p><strong>ヒント:</strong> 年度、申請者名、児童名を編集できます</p>
+            <p>上級者向け: 下部のJSONテキストエリアで直接編集することも可能です</p>
+        </div>
+
+        <div class="form-group">
+            <label for="editYear">年度（令和）</label>
+            <input type="text" id="editYear" placeholder="例: 7">
+            <div id="yearError" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="editApplicantName">申請者名</label>
+            <input type="text" id="editApplicantName" placeholder="例: 杉並 なみ">
+            <div id="applicantError" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="editChildName">児童名</label>
+            <input type="text" id="editChildName" placeholder="例: 杉並 すけ">
+            <div id="childError" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="editJsonData">JSONデータ（上級者向け）</label>
+            <textarea id="editJsonData" placeholder="JSONデータが表示されます..."></textarea>
+            <div id="jsonError" class="error-message"></div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-back" id="backBtn">← 戻る</button>
+            <button class="btn btn-primary" id="nextToFormBtn">次へ: 申請書を表示 →</button>
+        </div>
+    </div>
+
+    <script>
+        const editYear = document.getElementById('editYear');
+        const editApplicantName = document.getElementById('editApplicantName');
+        const editChildName = document.getElementById('editChildName');
+        const editJsonData = document.getElementById('editJsonData');
+        const validationStatus = document.getElementById('validationStatus');
+        const successMessage = document.getElementById('successMessage');
+        const backBtn = document.getElementById('backBtn');
+        const nextToFormBtn = document.getElementById('nextToFormBtn');
+
+        const yearError = document.getElementById('yearError');
+        const applicantError = document.getElementById('applicantError');
+        const childError = document.getElementById('childError');
+        const jsonError = document.getElementById('jsonError');
+
+        let jsonData = null;
+        let isValid = true;
+
+        // ページ読み込み時にlocalStorageからデータを取得
+        function loadData() {
+            const data = localStorage.getItem('extractedFormData');
+            if (!data) {
+                alert('データが見つかりません。Step 1からやり直してください。');
+                window.location.href = '/frontend/pdf-extractor.html';
+                return;
+            }
+
+            try {
+                jsonData = JSON.parse(data);
+                editYear.value = jsonData.year || '7';
+                editApplicantName.value = jsonData.applicantName || '';
+                editChildName.value = jsonData.childName || '';
+                editJsonData.value = JSON.stringify(jsonData, null, 2);
+                validateAll();
+            } catch (error) {
+                alert('データの読み込みに失敗しました: ' + error.message);
+                window.location.href = '/frontend/pdf-extractor.html';
+            }
+        }
+
+        // フィールド変更時にJSONを更新
+        function updateJsonFromFields() {
+            try {
+                // 現在のJSONをパース
+                const currentData = JSON.parse(editJsonData.value);
+
+                // フィールドの値で上書き
+                currentData.year = editYear.value;
+                currentData.applicantName = editApplicantName.value;
+                currentData.childName = editChildName.value;
+
+                // 更新したJSONをテキストエリアに反映
+                jsonData = currentData;
+                editJsonData.value = JSON.stringify(currentData, null, 2);
+
+                validateAll();
+            } catch (error) {
+                // JSONパースエラーは無視（ユーザーが手動で編集中の可能性）
+            }
+        }
+
+        // JSON直接編集時にフィールドを更新
+        function updateFieldsFromJson() {
+            try {
+                const currentData = JSON.parse(editJsonData.value);
+                jsonData = currentData;
+
+                editYear.value = currentData.year || '';
+                editApplicantName.value = currentData.applicantName || '';
+                editChildName.value = currentData.childName || '';
+
+                validateAll();
+            } catch (error) {
+                validateAll();
+            }
+        }
+
+        // ライブバリデーション
+        function validateAll() {
+            isValid = true;
+
+            // 年度の検証
+            if (!editYear.value || editYear.value.trim() === '') {
+                setError(editYear, yearError, '年度を入力してください');
+                isValid = false;
+            } else if (!/^\d+$/.test(editYear.value.trim())) {
+                setError(editYear, yearError, '年度は数字で入力してください');
+                isValid = false;
+            } else {
+                clearError(editYear, yearError);
+            }
+
+            // 申請者名の検証
+            if (!editApplicantName.value || editApplicantName.value.trim() === '') {
+                setError(editApplicantName, applicantError, '申請者名を入力してください');
+                isValid = false;
+            } else {
+                clearError(editApplicantName, applicantError);
+            }
+
+            // 児童名の検証
+            if (!editChildName.value || editChildName.value.trim() === '') {
+                setError(editChildName, childError, '児童名を入力してください');
+                isValid = false;
+            } else {
+                clearError(editChildName, childError);
+            }
+
+            // JSONの検証
+            try {
+                const parsed = JSON.parse(editJsonData.value);
+                if (!parsed.page1 || !parsed.page1.rows) {
+                    setError(editJsonData, jsonError, 'JSONデータが不完全です（page1.rowsが必要）');
+                    isValid = false;
+                } else {
+                    clearError(editJsonData, jsonError);
+                }
+            } catch (error) {
+                setError(editJsonData, jsonError, 'JSONの形式が正しくありません: ' + error.message);
+                isValid = false;
+            }
+
+            // バリデーション結果を表示
+            if (isValid) {
+                validationStatus.className = 'validation-status valid';
+                validationStatus.textContent = '✓ JSONデータは正常です';
+                nextToFormBtn.disabled = false;
+            } else {
+                validationStatus.className = 'validation-status invalid';
+                validationStatus.textContent = '✗ エラーがあります。修正してください';
+                nextToFormBtn.disabled = true;
+            }
+        }
+
+        function setError(element, errorElement, message) {
+            element.classList.add('error');
+            errorElement.textContent = message;
+            errorElement.classList.add('active');
+        }
+
+        function clearError(element, errorElement) {
+            element.classList.remove('error');
+            errorElement.textContent = '';
+            errorElement.classList.remove('active');
+        }
+
+        // イベントリスナー
+        editYear.addEventListener('input', updateJsonFromFields);
+        editApplicantName.addEventListener('input', updateJsonFromFields);
+        editChildName.addEventListener('input', updateJsonFromFields);
+        editJsonData.addEventListener('input', updateFieldsFromJson);
+
+        // 戻るボタン
+        backBtn.addEventListener('click', function() {
+            if (confirm('編集内容を破棄してPDF抽出画面に戻りますか？')) {
+                window.location.href = '/frontend/pdf-extractor.html';
+            }
+        });
+
+        // 次へボタン
+        nextToFormBtn.addEventListener('click', function() {
+            if (!isValid) {
+                alert('エラーを修正してから次に進んでください');
+                return;
+            }
+
+            try {
+                // 最終的なJSONデータを取得
+                const finalData = JSON.parse(editJsonData.value);
+
+                // フィールドの値で上書き（念のため）
+                finalData.year = editYear.value.trim();
+                finalData.applicantName = editApplicantName.value.trim();
+                finalData.childName = editChildName.value.trim();
+
+                // localStorageに保存
+                localStorage.setItem('extractedFormData', JSON.stringify(finalData));
+
+                // Step 3へ遷移
+                window.location.href = '/frontend/babysitter-form.html?loadExtracted=true';
+            } catch (error) {
+                alert('データの保存に失敗しました: ' + error.message);
+            }
+        });
+
+        // 初期化
+        loadData();
+    </script>
+</body>
+</html>
