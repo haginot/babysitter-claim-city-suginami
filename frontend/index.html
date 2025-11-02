@@ -269,6 +269,61 @@
             text-decoration: underline;
         }
 
+        .security-section {
+            background: #e8f5f3;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 40px 0;
+            border: 1px solid #009486;
+            border-left: 4px solid #009486;
+        }
+
+        .security-title {
+            font-size: 1.125rem;
+            color: #272833;
+            margin-bottom: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .security-icon {
+            font-size: 1.5rem;
+        }
+
+        .security-items {
+            margin-top: 20px;
+        }
+
+        .security-item {
+            margin-bottom: 15px;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .security-item::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #009486;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .security-item-title {
+            color: #272833;
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 0.9375rem;
+        }
+
+        .security-item-description {
+            color: #393a4a;
+            line-height: 1.8;
+            font-size: 0.875rem;
+        }
+
         footer {
             text-align: center;
             padding: 40px 20px;
@@ -382,6 +437,39 @@
                         <div class="step-content">
                             <h3>印刷して提出</h3>
                             <p>作成された利用内訳書を印刷し、区役所に提出します</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="security-section">
+                <h3 class="security-title">
+                    <span class="security-icon">🔒</span>
+                    安全性とプライバシー保護
+                </h3>
+                <div class="security-items">
+                    <div class="security-item">
+                        <div class="security-item-title">データは保存されません</div>
+                        <div class="security-item-description">
+                            アップロードされたPDFファイルは、サーバーに保存されることはありません。処理が完了すると、すぐにメモリから削除されます。
+                        </div>
+                    </div>
+                    <div class="security-item">
+                        <div class="security-item-title">暗号化通信で保護</div>
+                        <div class="security-item-description">
+                            すべての通信はHTTPS（SSL/TLS）で暗号化されており、第三者による傍受を防ぎます。
+                        </div>
+                    </div>
+                    <div class="security-item">
+                        <div class="security-item-title">ブラウザ上で編集</div>
+                        <div class="security-item-description">
+                            抽出されたデータの編集は、すべてお使いのブラウザ上で行われます。サーバーに送信されることはありません。
+                        </div>
+                    </div>
+                    <div class="security-item">
+                        <div class="security-item-title">個人情報の取り扱い</div>
+                        <div class="security-item-description">
+                            このツールは、個人を識別する情報を収集・保存・共有することはありません。安心してご利用いただけます。
                         </div>
                     </div>
                 </div>
