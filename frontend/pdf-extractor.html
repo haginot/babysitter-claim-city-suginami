@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Step 1: PDFファイルから利用状況を抽出 - 杉並区ベビーシッター利用支援申請</title>
+    <title>Step 1: PDF/領収書から利用状況を抽出 - 杉並区ベビーシッター利用支援申請</title>
     <style>
         * {
             box-sizing: border-box;
@@ -85,6 +85,21 @@
             font-size: 14px;
         }
 
+        .hint-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+            font-size: 13px;
+            color: #2e7d32;
+        }
+
+        .hint-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
         .extract-btn {
             display: inline-block;
             padding: 12px 40px;
@@ -161,28 +176,87 @@
             display: block;
         }
 
-        .table-preview {
+        /* PDF結果カード */
+        .results-section {
             display: none;
             margin-top: 30px;
         }
 
-        .table-preview.active {
+        .results-section.active {
             display: block;
         }
 
-        .table-preview h2 {
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-header h2 {
             font-size: 18px;
-            margin-bottom: 15px;
             color: #333;
         }
 
-        .table-info {
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 4px;
-            font-size: 13px;
+        .pdf-results {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .pdf-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .pdf-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .pdf-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .pdf-card-title .icon {
+            font-size: 20px;
+        }
+
+        .format-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .format-badge.kidsline {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .format-badge.invoice {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .pdf-card-body {
+            padding: 15px 20px;
+        }
+
+        .pdf-card-info {
             color: #666;
+            font-size: 13px;
+            margin-bottom: 10px;
         }
 
         .table-container {
@@ -194,7 +268,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         table thead {
@@ -204,9 +278,10 @@
 
         table th,
         table td {
-            padding: 12px;
+            padding: 10px;
             text-align: left;
             border: 1px solid #ddd;
+            white-space: nowrap;
         }
 
         table tbody tr:nth-child(even) {
@@ -217,14 +292,44 @@
             background-color: #f0f0f0;
         }
 
-        .actions {
-            margin-top: 20px;
+        .pdf-card-error {
+            color: #c62828;
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .pdf-card-actions {
+            padding: 15px 20px;
+            border-top: 1px solid #ddd;
             display: flex;
-            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-remove {
+            padding: 8px 16px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-remove:hover {
+            background: #d32f2f;
+        }
+
+        /* アクションボタン */
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 30px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -235,10 +340,17 @@
         .btn-primary {
             background-color: #4CAF50;
             color: white;
+            font-size: 16px;
+            padding: 12px 40px;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background-color: #45a049;
+        }
+
+        .btn-primary:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
 
         .btn-secondary {
@@ -254,14 +366,18 @@
             margin-bottom: 20px;
         }
 
-        .navigation a {
-            color: #2196F3;
-            text-decoration: none;
-            font-size: 14px;
+        /* デバッグオプション */
+        details {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
         }
 
-        .navigation a:hover {
-            text-decoration: underline;
+        summary {
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
         }
     </style>
 </head>
@@ -271,90 +387,89 @@
             <div style="color: #2196F3; font-weight: bold; margin-bottom: 10px;">Step 1 / 3</div>
         </div>
 
-        <h1>PDFファイルから利用状況を抽出</h1>
-        <p class="subtitle">請求書PDFをアップロードしてください（最大3ファイル）</p>
+        <h1>PDF/領収書から利用状況を抽出</h1>
+        <p class="subtitle">PDFをアップロードすると自動でフォーマットを判別します</p>
+
+        <div class="hint-box">
+            <strong>対応フォーマット</strong>
+            <ul style="margin-left: 20px; margin-top: 5px;">
+                <li><strong>請求書形式</strong>: 複数の利用明細が1つのテーブルにまとまっているPDF</li>
+                <li><strong>キッズライン領収書</strong>: 1回の利用ごとに発行される「領収書 兼 利用明細書」PDF</li>
+            </ul>
+        </div>
 
         <div class="error" id="errorMessage"></div>
         <div class="success" id="successMessage"></div>
 
         <div class="upload-section" id="uploadSection">
             <label for="fileInput" class="file-input-label">
-                PDFファイルを選択（最大3ファイル）
+                PDFファイルを選択（複数可）
             </label>
             <input type="file" id="fileInput" accept=".pdf" multiple>
             <div class="file-info" id="fileInfo">
-                または、ファイルをここにドラッグ&ドロップ（最大3ファイル）
+                または、ファイルをここにドラッグ&ドロップ
             </div>
         </div>
 
         <div style="text-align: center;">
-            <button class="extract-btn" id="extractBtn" disabled>テーブルを抽出して連結</button>
+            <button class="extract-btn" id="extractBtn" disabled>データを抽出</button>
         </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>PDFを解析中...</p>
+            <p id="loadingText">PDFを解析中...</p>
         </div>
 
-        <div class="table-preview" id="tablePreview">
-            <h2>抽出結果</h2>
-            <div class="table-info" id="tableInfo"></div>
-            <div class="table-container">
-                <table id="previewTable">
-                    <thead id="tableHead"></thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
+        <!-- 抽出結果 -->
+        <div class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h2>抽出結果</h2>
+                <span id="resultsSummary"></span>
             </div>
+
+            <div class="pdf-results" id="pdfResults">
+                <!-- PDFごとの結果カードがここに追加される -->
+            </div>
+
             <div class="actions">
-                <button class="btn btn-primary" id="nextToEditorBtn" style="font-size: 16px; padding: 12px 40px;">次へ: JSONを編集 →</button>
+                <button class="btn btn-secondary" id="addMoreBtn">+ PDFを追加</button>
+                <button class="btn btn-primary" id="nextToEditorBtn" disabled>次へ: JSONを編集 →</button>
             </div>
         </div>
 
-        <!-- デバッグ用のアクション（折りたたみ可能） -->
-        <details style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">
-            <summary style="cursor: pointer; font-weight: bold; color: #666;">デバッグオプション</summary>
+        <!-- デバッグオプション -->
+        <details style="margin-top: 20px;">
+            <summary>デバッグオプション</summary>
             <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn btn-secondary" id="exportCsvBtn" style="font-size: 12px;">CSVでエクスポート</button>
-                <button class="btn btn-secondary" id="copyBtn" style="font-size: 12px;">クリップボードにコピー</button>
-                <button class="btn btn-secondary" id="convertJsonBtn" style="font-size: 12px;">JSONダウンロード</button>
+                <button class="btn btn-secondary" id="exportCsvBtn" style="font-size: 12px;" disabled>CSVでエクスポート</button>
+                <button class="btn btn-secondary" id="copyBtn" style="font-size: 12px;" disabled>クリップボードにコピー</button>
             </div>
         </details>
-
-
-        <div class="table-preview" id="debugPreview" style="display: none;">
-            <h2>デバッグ情報（抽出されたすべてのテーブル）</h2>
-            <div id="debugContent"></div>
-        </div>
     </div>
 
     <script>
-        let extractedData = null;
+        // 抽出結果を保存
+        let extractedResults = [];
 
         const fileInput = document.getElementById('fileInput');
         const uploadSection = document.getElementById('uploadSection');
         const fileInfo = document.getElementById('fileInfo');
         const extractBtn = document.getElementById('extractBtn');
         const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
-        const tablePreview = document.getElementById('tablePreview');
-        const tableInfo = document.getElementById('tableInfo');
-        const tableHead = document.getElementById('tableHead');
-        const tableBody = document.getElementById('tableBody');
+        const resultsSection = document.getElementById('resultsSection');
+        const pdfResults = document.getElementById('pdfResults');
+        const resultsSummary = document.getElementById('resultsSummary');
+        const addMoreBtn = document.getElementById('addMoreBtn');
+        const nextToEditorBtn = document.getElementById('nextToEditorBtn');
         const exportCsvBtn = document.getElementById('exportCsvBtn');
         const copyBtn = document.getElementById('copyBtn');
-        const convertJsonBtn = document.getElementById('convertJsonBtn');
-        const nextToEditorBtn = document.getElementById('nextToEditorBtn');
-
 
         // ファイル選択時
         fileInput.addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
-            if (files.length > 3) {
-                showError('ファイルは最大3つまでアップロード可能です');
-                fileInput.value = '';
-                return;
-            }
             if (files.length > 0) {
                 handleFileSelect(files);
             }
@@ -376,12 +491,11 @@
             uploadSection.classList.remove('dragover');
 
             const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
-            if (files.length > 3) {
-                showError('ファイルは最大3つまでアップロード可能です');
-                return;
-            }
             if (files.length > 0) {
-                fileInput.files = e.dataTransfer.files;
+                // FileListをinputにセット（複数ファイル対応）
+                const dt = new DataTransfer();
+                files.forEach(f => dt.items.add(f));
+                fileInput.files = dt.files;
                 handleFileSelect(files);
             } else {
                 showError('PDFファイルのみアップロード可能です');
@@ -390,7 +504,7 @@
 
         function handleFileSelect(files) {
             if (files.length === 1) {
-                fileInfo.textContent = `選択されたファイル: ${files[0].name} (${formatFileSize(files[0].size)})`;
+                fileInfo.textContent = `選択: ${files[0].name} (${formatFileSize(files[0].size)})`;
             } else {
                 const totalSize = files.reduce((sum, f) => sum + f.size, 0);
                 fileInfo.textContent = `${files.length}個のファイルを選択 (合計: ${formatFileSize(totalSize)})`;
@@ -399,180 +513,320 @@
             hideMessages();
         }
 
-        // 抽出ボタンクリック
+        // 抽出ボタン
         extractBtn.addEventListener('click', async function() {
             const files = Array.from(fileInput.files);
             if (files.length === 0) {
                 showError('ファイルを選択してください');
                 return;
             }
-
-            await extractAndConcatTables(files);
+            await extractAllPdfs(files);
         });
 
-        async function extractAndConcatTables(files) {
+        // 追加ボタン
+        addMoreBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        // 追加ファイル選択時の処理
+        fileInput.addEventListener('change', async function(e) {
+            // 結果セクションが表示されている場合は追加モード
+            if (resultsSection.classList.contains('active')) {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    await extractAllPdfs(files, true);
+                }
+            }
+        });
+
+        async function extractAllPdfs(files, isAppend = false) {
             hideMessages();
             loading.classList.add('active');
-            tablePreview.classList.remove('active');
-            const debugPreview = document.getElementById('debugPreview');
-            debugPreview.style.display = 'none';
+
+            if (!isAppend) {
+                extractedResults = [];
+                pdfResults.innerHTML = '';
+            }
+
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                loadingText.textContent = `PDFを解析中... (${i + 1}/${files.length}): ${file.name}`;
+
+                try {
+                    const result = await extractSinglePdf(file);
+                    
+                    if (result.success) {
+                        extractedResults.push(result);
+                        addResultCard(result);
+                        successCount++;
+                    } else {
+                        addErrorCard(file.name, result.error, result.format);
+                        errorCount++;
+                    }
+                } catch (error) {
+                    addErrorCard(file.name, error.message);
+                    errorCount++;
+                }
+            }
+
+            loading.classList.remove('active');
+            resultsSection.classList.add('active');
+
+            // サマリー更新
+            updateSummary();
+
+            // 次へボタンの有効化
+            nextToEditorBtn.disabled = extractedResults.length === 0;
+            exportCsvBtn.disabled = extractedResults.length === 0;
+            copyBtn.disabled = extractedResults.length === 0;
+
+            if (successCount > 0) {
+                showSuccess(`${successCount}件のPDFからデータを抽出しました${errorCount > 0 ? `（${errorCount}件失敗）` : ''}`);
+            } else {
+                showError('すべてのPDFでデータ抽出に失敗しました');
+            }
+
+            // ファイル選択をリセット
+            fileInput.value = '';
+            fileInfo.textContent = 'または、ファイルをここにドラッグ&ドロップ';
+            extractBtn.disabled = true;
+        }
+
+        async function extractSinglePdf(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/api/extract-auto', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                return {
+                    success: false,
+                    error: data.error || 'エラーが発生しました',
+                    format: data.format,
+                    filename: file.name
+                };
+            }
+
+            return data;
+        }
+
+        function addResultCard(result) {
+            const card = document.createElement('div');
+            card.className = 'pdf-card';
+            card.dataset.filename = result.filename;
+
+            const formatLabel = result.format === 'kidsline' ? 'キッズライン領収書' : '請求書形式';
+            const formatClass = result.format === 'kidsline' ? 'kidsline' : 'invoice';
+            const icon = result.format === 'kidsline' ? '🧾' : '📋';
+
+            let infoText = `${result.rows}行 × ${result.columns}列`;
+            if (result.child_name) {
+                infoText += ` | お子様: ${result.child_name}`;
+            }
+            if (result.sitter_name) {
+                infoText += ` | シッター: ${result.sitter_name}`;
+            }
+
+            card.innerHTML = `
+                <div class="pdf-card-header">
+                    <div class="pdf-card-title">
+                        <span class="icon">${icon}</span>
+                        <span>${result.filename}</span>
+                    </div>
+                    <span class="format-badge ${formatClass}">${formatLabel}</span>
+                </div>
+                <div class="pdf-card-body">
+                    <div class="pdf-card-info">${infoText}</div>
+                    <div class="table-container">
+                        ${createTableHtml(result.table)}
+                    </div>
+                </div>
+                <div class="pdf-card-actions">
+                    <button class="btn-remove" onclick="removeResult('${result.filename}')">削除</button>
+                </div>
+            `;
+
+            pdfResults.appendChild(card);
+        }
+
+        function addErrorCard(filename, error, format) {
+            const card = document.createElement('div');
+            card.className = 'pdf-card';
+
+            const formatLabel = format === 'kidsline' ? 'キッズライン領収書' : (format === 'invoice' ? '請求書形式' : '不明');
+
+            card.innerHTML = `
+                <div class="pdf-card-header">
+                    <div class="pdf-card-title">
+                        <span class="icon">❌</span>
+                        <span>${filename}</span>
+                    </div>
+                    ${format ? `<span class="format-badge ${format}">${formatLabel}</span>` : ''}
+                </div>
+                <div class="pdf-card-body">
+                    <div class="pdf-card-error">${error}</div>
+                </div>
+            `;
+
+            pdfResults.appendChild(card);
+        }
+
+        function createTableHtml(table) {
+            if (!table || table.length === 0) return '<p>データなし</p>';
+
+            let html = '<table><thead><tr>';
+            
+            // ヘッダー
+            const header = table[0];
+            header.forEach(cell => {
+                html += `<th>${escapeHtml(cell || '')}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            // データ行
+            for (let i = 1; i < table.length; i++) {
+                html += '<tr>';
+                table[i].forEach(cell => {
+                    html += `<td>${escapeHtml(cell || '')}</td>`;
+                });
+                html += '</tr>';
+            }
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function removeResult(filename) {
+            // 結果から削除
+            extractedResults = extractedResults.filter(r => r.filename !== filename);
+            
+            // カードを削除
+            const card = pdfResults.querySelector(`[data-filename="${filename}"]`);
+            if (card) {
+                card.remove();
+            }
+
+            // サマリー更新
+            updateSummary();
+
+            // ボタン状態更新
+            nextToEditorBtn.disabled = extractedResults.length === 0;
+            exportCsvBtn.disabled = extractedResults.length === 0;
+            copyBtn.disabled = extractedResults.length === 0;
+
+            if (extractedResults.length === 0) {
+                resultsSection.classList.remove('active');
+            }
+        }
+
+        function updateSummary() {
+            const totalRows = extractedResults.reduce((sum, r) => sum + (r.rows - 1), 0); // ヘッダー行を除く
+            
+            // フォーマット別の件数を集計
+            const kidslineCount = extractedResults.filter(r => r.format === 'kidsline').length;
+            const invoiceCount = extractedResults.filter(r => r.format === 'invoice').length;
+            
+            let formatInfo = '';
+            if (kidslineCount > 0 && invoiceCount > 0) {
+                formatInfo = `（🧾領収書${kidslineCount}件 + 📋請求書${invoiceCount}件）`;
+            } else if (kidslineCount > 0) {
+                formatInfo = `（🧾キッズライン領収書）`;
+            } else if (invoiceCount > 0) {
+                formatInfo = `（📋請求書形式）`;
+            }
+            
+            resultsSummary.textContent = `${extractedResults.length}件のPDF${formatInfo}、合計${totalRows}行のデータ`;
+        }
+
+        // 次へボタン
+        nextToEditorBtn.addEventListener('click', async function() {
+            if (extractedResults.length === 0) {
+                showError('抽出結果がありません');
+                return;
+            }
 
             try {
-                const allTables = [];
-                let commonHeader = null;
+                loading.classList.add('active');
+                loadingText.textContent = 'JSONに変換中...';
 
-                // 各PDFからテーブルを抽出
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    loading.querySelector('p').textContent = `PDFを解析中... (${i + 1}/${files.length})`;
+                // テーブルを結合
+                const mergedTable = mergeExtractedTables(extractedResults);
 
-                    const formData = new FormData();
-                    formData.append('file', file);
+                // JSON変換APIを呼び出し
+                const response = await fetch('/api/convert-to-json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        table: mergedTable
+                    })
+                });
 
-                    const response = await fetch('/api/extract-table', {
-                        method: 'POST',
-                        body: formData
-                    });
+                const data = await response.json();
 
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        if (data.debug) {
-                            displayDebugInfo(data.debug);
-                        }
-                        throw new Error(`${file.name}: ${data.error || 'エラーが発生しました'}`);
-                    }
-
-                    if (data.success && data.table && data.table.length > 0) {
-                        // 最初のファイルからヘッダーを保存
-                        if (i === 0) {
-                            commonHeader = data.table[0];
-                            allTables.push(data.table[0]); // ヘッダー行を追加
-                        }
-
-                        // データ行のみを追加（ヘッダー行をスキップ）
-                        for (let j = 1; j < data.table.length; j++) {
-                            allTables.push(data.table[j]);
-                        }
-                    }
+                if (!response.ok) {
+                    throw new Error(data.error || 'JSON変換に失敗しました');
                 }
 
-                if (allTables.length === 0) {
-                    throw new Error('テーブルが抽出できませんでした');
+                if (data.success && data.data) {
+                    // 抽出結果も保存（Step2で表示用）
+                    localStorage.setItem('extractedTableData', JSON.stringify({
+                        results: extractedResults,
+                        mergedTable: mergedTable
+                    }));
+                    localStorage.setItem('extractedFormData', JSON.stringify(data.data));
+                    window.location.href = '/frontend/json-editor.html';
+                } else {
+                    throw new Error('変換結果が無効です');
                 }
-
-                // 連結したテーブルを表示
-                extractedData = allTables;
-                displayTable(allTables, allTables.length, allTables[0].length);
-                showSuccess(`${files.length}個のPDFからテーブルを抽出・連結しました（${allTables.length}行 × ${allTables[0].length}列）`);
 
             } catch (error) {
                 showError(error.message);
             } finally {
                 loading.classList.remove('active');
-                loading.querySelector('p').textContent = 'PDFを解析中...';
             }
-        }
+        });
 
-        async function extractTable(file) {
-            const formData = new FormData();
-            formData.append('file', file);
+        function mergeExtractedTables(results) {
+            if (results.length === 0) return [];
 
-            const response = await fetch('/api/extract-table', {
-                method: 'POST',
-                body: formData
+            // 最初の結果からヘッダーを取得
+            const header = results[0].table[0];
+            const mergedTable = [header];
+
+            // 各結果のデータ行を追加
+            for (const result of results) {
+                for (let i = 1; i < result.table.length; i++) {
+                    mergedTable.push(result.table[i]);
+                }
+            }
+
+            // 日付順にソート（データ行のみ）
+            const dataRows = mergedTable.slice(1);
+            dataRows.sort((a, b) => {
+                const dateA = a[0] || '';
+                const dateB = b[0] || '';
+                return dateA.localeCompare(dateB);
             });
 
-            return await response.json();
-        }
-
-        function displayDebugInfo(debug) {
-            const debugPreview = document.getElementById('debugPreview');
-            const debugContent = document.getElementById('debugContent');
-
-            if (!debug || !debug.all_tables) {
-                return;
-            }
-
-            let html = `<p style="margin-bottom: 20px; color: #666;">PDFから ${debug.tables_found} 個のテーブルが見つかりました</p>`;
-
-            debug.all_tables.forEach((tableInfo, idx) => {
-                html += `
-                    <div style="margin-bottom: 30px; border: 1px solid #ddd; border-radius: 4px; padding: 15px; background: #f9f9f9;">
-                        <h3 style="margin-bottom: 10px; font-size: 16px;">テーブル ${tableInfo.table_index + 1} (${tableInfo.rows}行 × ${tableInfo.columns}列)</h3>
-                        <div class="table-container">
-                            <table style="font-size: 12px; width: 100%;">
-                                <tbody>
-                `;
-
-                tableInfo.data.forEach((row, rowIdx) => {
-                    html += '<tr>';
-                    row.forEach((cell, cellIdx) => {
-                        const cellContent = cell || '(空)';
-                        const normalized = cellContent.replace(/\s/g, '');
-                        const highlight = (normalized.includes('ご利用日') ||
-                                          normalized.includes('ご利⽤⽇') ||
-                                          normalized.includes('利用日') ||
-                                          normalized.includes('利⽤⽇')) ?
-                                          'background: yellow; font-weight: bold;' : '';
-                        html += `<td style="border: 1px solid #ddd; padding: 8px; ${highlight}">${cellContent}</td>`;
-                    });
-                    html += '</tr>';
-                });
-
-                html += `
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            });
-
-            debugContent.innerHTML = html;
-            debugPreview.style.display = 'block';
-        }
-
-        function displayTable(table, rows, columns) {
-            if (!table || table.length === 0) {
-                showError('テーブルデータが空です');
-                return;
-            }
-
-            // テーブル情報を表示
-            tableInfo.textContent = `${rows}行 × ${columns}列のテーブル`;
-
-            // ヘッダー行を設定
-            const headerRow = table[0];
-            tableHead.innerHTML = '';
-            const headerTr = document.createElement('tr');
-            headerRow.forEach(cell => {
-                const th = document.createElement('th');
-                th.textContent = cell || '';
-                headerTr.appendChild(th);
-            });
-            tableHead.appendChild(headerTr);
-
-            // データ行を設定
-            tableBody.innerHTML = '';
-            for (let i = 1; i < table.length; i++) {
-                const row = table[i];
-                const tr = document.createElement('tr');
-                row.forEach(cell => {
-                    const td = document.createElement('td');
-                    td.textContent = cell || '';
-                    tr.appendChild(td);
-                });
-                tableBody.appendChild(tr);
-            }
-
-            tablePreview.classList.add('active');
+            return [header, ...dataRows];
         }
 
         // CSVエクスポート
         exportCsvBtn.addEventListener('click', function() {
-            if (!extractedData) return;
+            if (extractedResults.length === 0) return;
 
-            const csv = extractedData.map(row =>
+            const mergedTable = mergeExtractedTables(extractedResults);
+            const csv = mergedTable.map(row =>
                 row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
             ).join('\n');
 
@@ -587,221 +841,16 @@
 
         // クリップボードにコピー
         copyBtn.addEventListener('click', async function() {
-            if (!extractedData) return;
+            if (extractedResults.length === 0) return;
 
-            const text = extractedData.map(row => row.join('\t')).join('\n');
+            const mergedTable = mergeExtractedTables(extractedResults);
+            const text = mergedTable.map(row => row.join('\t')).join('\n');
 
             try {
                 await navigator.clipboard.writeText(text);
                 showSuccess('クリップボードにコピーしました');
             } catch (error) {
                 showError('コピーに失敗しました');
-            }
-        });
-
-        // JSONに変換してダウンロード
-        convertJsonBtn.addEventListener('click', async function() {
-            if (!extractedData) return;
-
-            try {
-                loading.classList.add('active');
-                loading.querySelector('p').textContent = 'JSONに変換中...';
-
-                const response = await fetch('/api/convert-to-json', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        table: extractedData
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'JSON変換に失敗しました');
-                }
-
-                if (data.success && data.data) {
-                    // JSONファイルをダウンロード
-                    const jsonString = JSON.stringify(data.data, null, 2);
-                    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'form_data.json';
-                    link.click();
-
-                    showSuccess('JSONファイルをダウンロードしました');
-                } else {
-                    throw new Error('変換結果が無効です');
-                }
-
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                loading.classList.remove('active');
-                loading.querySelector('p').textContent = 'PDFを解析中...';
-            }
-        });
-
-        // 「次へ: JSONを編集」ボタン
-        nextToEditorBtn.addEventListener('click', async function() {
-            if (!extractedData) return;
-
-            try {
-                loading.classList.add('active');
-                loading.querySelector('p').textContent = 'JSONに変換中...';
-
-                const response = await fetch('/api/convert-to-json', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        table: extractedData
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'JSON変換に失敗しました');
-                }
-
-                if (data.success && data.data) {
-                    // JSONデータをlocalStorageに保存してStep2へ遷移
-                    localStorage.setItem('extractedFormData', JSON.stringify(data.data));
-                    window.location.href = '/frontend/json-editor.html';
-                } else {
-                    throw new Error('変換結果が無効です');
-                }
-
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                loading.classList.remove('active');
-                loading.querySelector('p').textContent = 'PDFを解析中...';
-            }
-        });
-
-        // JSON編集モーダル - キャンセルボタン
-        cancelEditBtn.addEventListener('click', function() {
-            jsonEditorModal.style.display = 'none';
-            currentJsonData = null;
-        });
-
-        // JSON編集モーダル - フィールド編集時にJSONを更新
-        function updateJsonFromFields() {
-            if (!currentJsonData) return;
-
-            try {
-                // テキストエリアのJSONをパース
-                const jsonData = JSON.parse(editJsonData.value);
-
-                // フィールドの値で上書き
-                jsonData.year = editYear.value;
-                jsonData.applicantName = editApplicantName.value;
-                jsonData.childName = editChildName.value;
-
-                // 更新したJSONをテキストエリアに反映
-                currentJsonData = jsonData;
-                editJsonData.value = JSON.stringify(jsonData, null, 2);
-            } catch (error) {
-                // JSONパースエラーは無視（ユーザーが手動で編集中の可能性）
-            }
-        }
-
-        editYear.addEventListener('change', updateJsonFromFields);
-        editApplicantName.addEventListener('change', updateJsonFromFields);
-        editChildName.addEventListener('change', updateJsonFromFields);
-
-        // JSON編集モーダル - ダウンロードボタン
-        downloadEditedJsonBtn.addEventListener('click', function() {
-            try {
-                // テキストエリアから最新のJSONを取得
-                const jsonData = JSON.parse(editJsonData.value);
-
-                // フィールドの値で上書き
-                jsonData.year = editYear.value;
-                jsonData.applicantName = editApplicantName.value;
-                jsonData.childName = editChildName.value;
-
-                // JSONファイルをダウンロード
-                const jsonString = JSON.stringify(jsonData, null, 2);
-                const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'form_data.json';
-                link.click();
-
-                showSuccess('JSONファイルをダウンロードしました');
-                jsonEditorModal.style.display = 'none';
-            } catch (error) {
-                alert('JSONの形式が正しくありません: ' + error.message);
-            }
-        });
-
-        // JSON編集モーダル - 申請書に読み込むボタン
-        loadEditedJsonBtn.addEventListener('click', function() {
-            try {
-                // テキストエリアから最新のJSONを取得
-                const jsonData = JSON.parse(editJsonData.value);
-
-                // フィールドの値で上書き
-                jsonData.year = editYear.value;
-                jsonData.applicantName = editApplicantName.value;
-                jsonData.childName = editChildName.value;
-
-                // JSONデータをlocalStorageに保存
-                localStorage.setItem('extractedFormData', JSON.stringify(jsonData));
-
-                // 申請書ページにリダイレクト
-                window.location.href = '/frontend/babysitter-form.html?loadExtracted=true';
-            } catch (error) {
-                alert('JSONの形式が正しくありません: ' + error.message);
-            }
-        });
-
-        // JSONに変換して申請書に読み込む（編集なし）
-        loadToFormBtn.addEventListener('click', async function() {
-            if (!extractedData) return;
-
-            try {
-                loading.classList.add('active');
-                loading.querySelector('p').textContent = 'JSONに変換中...';
-
-                const response = await fetch('/api/convert-to-json', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        table: extractedData
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'JSON変換に失敗しました');
-                }
-
-                if (data.success && data.data) {
-                    // JSONデータをlocalStorageに保存
-                    localStorage.setItem('extractedFormData', JSON.stringify(data.data));
-
-                    // 申請書ページにリダイレクト
-                    window.location.href = '/frontend/babysitter-form.html?loadExtracted=true';
-                } else {
-                    throw new Error('変換結果が無効です');
-                }
-
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                loading.classList.remove('active');
-                loading.querySelector('p').textContent = 'PDFを解析中...';
             }
         });
 
@@ -828,6 +877,12 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
         }
     </script>
 </body>

@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             padding: 30px;
@@ -62,8 +62,87 @@
             font-size: 14px;
         }
 
+        /* 2カラムレイアウト */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .column {
+            min-width: 0;
+        }
+
+        .column h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        /* テーブルプレビュー */
+        .table-preview {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .table-header {
+            background: #f5f5f5;
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        table thead {
+            background-color: #4CAF50;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        table th,
+        table td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+            white-space: nowrap;
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tbody tr:hover {
+            background-color: #e3f2fd;
+        }
+
+        /* フォーム */
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         label {
@@ -97,7 +176,7 @@
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             font-size: 12px;
             line-height: 1.5;
-            min-height: 400px;
+            min-height: 300px;
             resize: vertical;
         }
 
@@ -195,6 +274,63 @@
             margin: 5px 0;
             color: #1976D2;
         }
+
+        /* サマリー情報 */
+        .summary-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: #666;
+        }
+
+        .summary-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* PDF情報タグ */
+        .pdf-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .pdf-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            background: #e3f2fd;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #1565c0;
+        }
+
+        .pdf-tag.kidsline {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .pdf-tag.invoice {
+            background: #fff3e0;
+            color: #e65100;
+        }
     </style>
 </head>
 <body>
@@ -204,42 +340,88 @@
             <div class="step-indicator">Step 2 / 3</div>
         </div>
 
-        <h1>JSONデータを編集</h1>
-        <p class="subtitle">申請情報を編集してください</p>
+        <h1>抽出データを編集</h1>
+        <p class="subtitle">結合された利用データを確認・編集してください</p>
 
         <div id="successMessage" class="success-message"></div>
 
         <div id="validationStatus" class="validation-status valid">
-            ✓ JSONデータは正常です
+            ✓ データは正常です
         </div>
 
-        <div class="info-box">
-            <p><strong>ヒント:</strong> 年度、申請者名、児童名を編集できます</p>
-            <p>上級者向け: 下部のJSONテキストエリアで直接編集することも可能です</p>
+        <!-- サマリー情報 -->
+        <div class="summary-box">
+            <div class="summary-item">
+                <span class="summary-label">抽出元PDF</span>
+                <span class="summary-value" id="summaryPdfCount">-</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">利用回数</span>
+                <span class="summary-value" id="summaryRowCount">-</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">合計利用時間</span>
+                <span class="summary-value" id="summaryTotalTime">-</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">合計金額</span>
+                <span class="summary-value" id="summaryTotalAmount">-</span>
+            </div>
+            <div class="pdf-tags" id="pdfTags"></div>
         </div>
 
-        <div class="form-group">
-            <label for="editYear">年度（令和）</label>
-            <input type="text" id="editYear" placeholder="例: 7">
-            <div id="yearError" class="error-message"></div>
-        </div>
+        <div class="two-column">
+            <!-- 左カラム: テーブルプレビュー -->
+            <div class="column">
+                <h2>結合テーブル</h2>
+                <div class="table-preview">
+                    <div class="table-header">
+                        <span>抽出データ</span>
+                        <span id="tableInfo"></span>
+                    </div>
+                    <div class="table-container">
+                        <table id="previewTable">
+                            <thead id="tableHead"></thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label for="editApplicantName">申請者名</label>
-            <input type="text" id="editApplicantName" placeholder="例: 杉並 なみ">
-            <div id="applicantError" class="error-message"></div>
-        </div>
+            <!-- 右カラム: 編集フォーム -->
+            <div class="column">
+                <h2>申請情報を編集</h2>
 
-        <div class="form-group">
-            <label for="editChildName">児童名</label>
-            <input type="text" id="editChildName" placeholder="例: 杉並 すけ">
-            <div id="childError" class="error-message"></div>
-        </div>
+                <div class="info-box">
+                    <p><strong>ヒント:</strong> 年度、申請者名、児童名を編集できます</p>
+                </div>
 
-        <div class="form-group">
-            <label for="editJsonData">JSONデータ（上級者向け）</label>
-            <textarea id="editJsonData" placeholder="JSONデータが表示されます..."></textarea>
-            <div id="jsonError" class="error-message"></div>
+                <div class="form-group">
+                    <label for="editYear">年度（令和）</label>
+                    <input type="text" id="editYear" placeholder="例: 7">
+                    <div id="yearError" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editApplicantName">申請者名</label>
+                    <input type="text" id="editApplicantName" placeholder="例: 杉並 なみ">
+                    <div id="applicantError" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editChildName">児童名</label>
+                    <input type="text" id="editChildName" placeholder="例: 杉並 すけ">
+                    <div id="childError" class="error-message"></div>
+                </div>
+
+                <details style="margin-top: 20px;">
+                    <summary style="cursor: pointer; font-weight: bold; color: #666;">JSONデータ（上級者向け）</summary>
+                    <div style="margin-top: 15px;">
+                        <textarea id="editJsonData" placeholder="JSONデータが表示されます..."></textarea>
+                        <div id="jsonError" class="error-message"></div>
+                    </div>
+                </details>
+            </div>
         </div>
 
         <div class="actions">
@@ -263,24 +445,41 @@
         const childError = document.getElementById('childError');
         const jsonError = document.getElementById('jsonError');
 
+        const tableHead = document.getElementById('tableHead');
+        const tableBody = document.getElementById('tableBody');
+        const tableInfo = document.getElementById('tableInfo');
+        const pdfTags = document.getElementById('pdfTags');
+
         let jsonData = null;
+        let tableData = null;
         let isValid = true;
 
         // ページ読み込み時にlocalStorageからデータを取得
         function loadData() {
-            const data = localStorage.getItem('extractedFormData');
-            if (!data) {
+            const formDataStr = localStorage.getItem('extractedFormData');
+            const tableDataStr = localStorage.getItem('extractedTableData');
+
+            if (!formDataStr) {
                 alert('データが見つかりません。Step 1からやり直してください。');
                 window.location.href = '/frontend/pdf-extractor.html';
                 return;
             }
 
             try {
-                jsonData = JSON.parse(data);
+                jsonData = JSON.parse(formDataStr);
                 editYear.value = jsonData.year || '7';
                 editApplicantName.value = jsonData.applicantName || '';
                 editChildName.value = jsonData.childName || '';
                 editJsonData.value = JSON.stringify(jsonData, null, 2);
+
+                // テーブルデータがある場合は表示
+                if (tableDataStr) {
+                    tableData = JSON.parse(tableDataStr);
+                    displayTable(tableData.mergedTable);
+                    displayPdfTags(tableData.results);
+                    updateSummary(tableData);
+                }
+
                 validateAll();
             } catch (error) {
                 alert('データの読み込みに失敗しました: ' + error.message);
@@ -288,24 +487,111 @@
             }
         }
 
+        function displayTable(table) {
+            if (!table || table.length === 0) return;
+
+            // テーブル情報
+            tableInfo.textContent = `${table.length}行 × ${table[0].length}列`;
+
+            // ヘッダー
+            tableHead.innerHTML = '';
+            const headerRow = document.createElement('tr');
+            table[0].forEach(cell => {
+                const th = document.createElement('th');
+                th.textContent = cell || '';
+                headerRow.appendChild(th);
+            });
+            tableHead.appendChild(headerRow);
+
+            // データ行
+            tableBody.innerHTML = '';
+            for (let i = 1; i < table.length; i++) {
+                const tr = document.createElement('tr');
+                table[i].forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell || '';
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            }
+        }
+
+        function displayPdfTags(results) {
+            if (!results || results.length === 0) return;
+
+            pdfTags.innerHTML = '';
+            results.forEach(result => {
+                const tag = document.createElement('span');
+                const formatClass = result.format === 'kidsline' ? 'kidsline' : 'invoice';
+                const icon = result.format === 'kidsline' ? '🧾' : '📋';
+                tag.className = `pdf-tag ${formatClass}`;
+                tag.innerHTML = `${icon} ${result.filename}`;
+                pdfTags.appendChild(tag);
+            });
+        }
+
+        function updateSummary(tableData) {
+            if (!tableData) return;
+
+            // PDF数
+            document.getElementById('summaryPdfCount').textContent = `${tableData.results.length}件`;
+
+            // 行数（ヘッダーを除く）
+            const rowCount = tableData.mergedTable.length - 1;
+            document.getElementById('summaryRowCount').textContent = `${rowCount}回`;
+
+            // 合計時間と金額を計算
+            let totalMinutes = 0;
+            let totalAmount = 0;
+
+            for (let i = 1; i < tableData.mergedTable.length; i++) {
+                const row = tableData.mergedTable[i];
+                
+                // 時間計算（開始時刻と終了時刻から）
+                const startTime = row[1]; // 開始時刻
+                const endTime = row[2];   // 終了時刻
+                if (startTime && endTime) {
+                    try {
+                        const [startH, startM] = startTime.split(':').map(Number);
+                        const [endH, endM] = endTime.split(':').map(Number);
+                        const minutes = (endH * 60 + endM) - (startH * 60 + startM);
+                        if (minutes > 0) {
+                            totalMinutes += minutes;
+                        }
+                    } catch (e) {}
+                }
+
+                // 金額計算（お支払い額）
+                const amount = row[12]; // お支払い額
+                if (amount) {
+                    const numAmount = parseInt(String(amount).replace(/,/g, ''), 10);
+                    if (!isNaN(numAmount)) {
+                        totalAmount += numAmount;
+                    }
+                }
+            }
+
+            // 時間表示
+            const hours = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            document.getElementById('summaryTotalTime').textContent = `${hours}時間${mins}分`;
+
+            // 金額表示
+            document.getElementById('summaryTotalAmount').textContent = `¥${totalAmount.toLocaleString()}`;
+        }
+
         // フィールド変更時にJSONを更新
         function updateJsonFromFields() {
             try {
-                // 現在のJSONをパース
                 const currentData = JSON.parse(editJsonData.value);
-
-                // フィールドの値で上書き
                 currentData.year = editYear.value;
                 currentData.applicantName = editApplicantName.value;
                 currentData.childName = editChildName.value;
-
-                // 更新したJSONをテキストエリアに反映
                 jsonData = currentData;
                 editJsonData.value = JSON.stringify(currentData, null, 2);
-
                 validateAll();
             } catch (error) {
-                // JSONパースエラーは無視（ユーザーが手動で編集中の可能性）
+                // JSONパースエラーは無視
             }
         }
 
@@ -314,22 +600,20 @@
             try {
                 const currentData = JSON.parse(editJsonData.value);
                 jsonData = currentData;
-
                 editYear.value = currentData.year || '';
                 editApplicantName.value = currentData.applicantName || '';
                 editChildName.value = currentData.childName || '';
-
                 validateAll();
             } catch (error) {
                 validateAll();
             }
         }
 
-        // ライブバリデーション
+        // バリデーション
         function validateAll() {
             isValid = true;
 
-            // 年度の検証
+            // 年度
             if (!editYear.value || editYear.value.trim() === '') {
                 setError(editYear, yearError, '年度を入力してください');
                 isValid = false;
@@ -340,7 +624,7 @@
                 clearError(editYear, yearError);
             }
 
-            // 申請者名の検証
+            // 申請者名
             if (!editApplicantName.value || editApplicantName.value.trim() === '') {
                 setError(editApplicantName, applicantError, '申請者名を入力してください');
                 isValid = false;
@@ -348,7 +632,7 @@
                 clearError(editApplicantName, applicantError);
             }
 
-            // 児童名の検証
+            // 児童名
             if (!editChildName.value || editChildName.value.trim() === '') {
                 setError(editChildName, childError, '児童名を入力してください');
                 isValid = false;
@@ -356,7 +640,7 @@
                 clearError(editChildName, childError);
             }
 
-            // JSONの検証
+            // JSON
             try {
                 const parsed = JSON.parse(editJsonData.value);
                 if (!parsed.page1 || !parsed.page1.rows) {
@@ -370,10 +654,10 @@
                 isValid = false;
             }
 
-            // バリデーション結果を表示
+            // 結果表示
             if (isValid) {
                 validationStatus.className = 'validation-status valid';
-                validationStatus.textContent = '✓ JSONデータは正常です';
+                validationStatus.textContent = '✓ データは正常です';
                 nextToFormBtn.disabled = false;
             } else {
                 validationStatus.className = 'validation-status invalid';
@@ -415,18 +699,11 @@
             }
 
             try {
-                // 最終的なJSONデータを取得
                 const finalData = JSON.parse(editJsonData.value);
-
-                // フィールドの値で上書き（念のため）
                 finalData.year = editYear.value.trim();
                 finalData.applicantName = editApplicantName.value.trim();
                 finalData.childName = editChildName.value.trim();
-
-                // localStorageに保存
                 localStorage.setItem('extractedFormData', JSON.stringify(finalData));
-
-                // Step 3へ遷移
                 window.location.href = '/frontend/babysitter-form.html?loadExtracted=true';
             } catch (error) {
                 alert('データの保存に失敗しました: ' + error.message);
